@@ -12,8 +12,15 @@
 
   const NOT_FINISHED = ['open', 'doing'];
 
-  /** jsonlite auto_unbox turns length-1 vectors into scalars. */
-  const arr = (x) => (x == null ? [] : Array.isArray(x) ? x : [x]);
+  /**
+   * jsonlite auto_unbox turns length-1 vectors into scalars.
+   * @template T
+   * @param {T | T[] | null | undefined} x
+   * @returns {T[]}
+   */
+  const arr = (x) => (
+    x == null ? [] : Array.isArray(x) ? x : /** @type {T[]} */ ([x])
+  );
 
   /** @param {string} s */
   const finished = (s) => s.length > 0 && NOT_FINISHED.indexOf(s) < 0;

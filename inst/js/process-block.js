@@ -180,6 +180,7 @@
 
     /** @param {string} prefix @returns {string} */
     _newId(prefix) {
+      /** @type {string} */
       let id;
       do { id = (prefix || 's') + this._counter++; }
       while (this._steps.some((s) => s.task === id));
@@ -239,7 +240,11 @@
 
     /* --- The model: the flat tasks list read as a graph --- */
 
-    /** The exits of a group: the members nothing else inside it waits for. */
+    /**
+     * The exits of a group: the members nothing else inside it waits for.
+     * @param {ProcessStep} g
+     * @returns {string[]}
+     */
     _leavesOf(g) {
       const members = this._membersOf(g);
       const ids = new Set(members.map((s) => s.task));
@@ -251,7 +256,11 @@
       return (out.length ? out : members).map((s) => s.task);
     }
 
-    /** The entries of a group: the members that wait for nothing inside it. */
+    /**
+     * The entries of a group: the members that wait for nothing inside it.
+     * @param {ProcessStep} g
+     * @returns {string[]}
+     */
     _rootsOf(g) {
       const members = this._membersOf(g);
       const ids = new Set(members.map((s) => s.task));
@@ -282,11 +291,20 @@
       const links = [];
       /** @type {Map<string, {task: string, raw: string}>} */
       this._linkSrc = new Map();
+      // held locally as well: `_linkSrc` is only assigned here, so before the
+      // first _model() it is undefined and every read has to be guarded (see
+      // _gesture). Inside this pass it cannot be, and the local says so.
+      const linkSrc = this._linkSrc;
+      /**
+       * @param {string} from @param {string} to
+       * @param {string | null} input the outcome qualifier, null if unqualified
+       * @param {string} owner @param {string} raw
+       */
       const add = (from, to, input, owner, raw) => {
         const id = from + '>' + to;
-        if (from === to || this._linkSrc.has(id)) return;
+        if (from === to || linkSrc.has(id)) return;
         links.push({ id: id, from: from, to: to, input: input || '' });
-        this._linkSrc.set(id, { task: owner, raw: raw });
+        linkSrc.set(id, { task: owner, raw: raw });
       };
 
       body.forEach((s) => {
@@ -385,6 +403,7 @@
 
     /* --- The adapter the renderer talks to --- */
 
+    /** @returns {MinidagRailAdapter} */
     _adapter() {
       return {
         opts: {
@@ -613,7 +632,10 @@
      * @param {string[]} ids
      */
     _addGroup(ids) {
-      const members = ids.map((id) => this._stepOf(id)).filter(Boolean);
+      // filter(Boolean) drops the misses, which the checker cannot see
+      const members = /** @type {ProcessStep[]} */ (
+        ids.map((id) => this._stepOf(id)).filter(Boolean)
+      );
       if (!members.length) return;
       const collection = this._collections()[0] || 'element';
       const group = {
@@ -689,6 +711,7 @@
         if (s === g) return;
         /** @type {DepToken[]} */
         const out = [];
+        /** @param {DepToken} t */
         const push = (t) => {
           if (t.on === s.task) return;
           if (!out.some((o) => depRaw(o) === depRaw(t))) out.push(t);
@@ -996,6 +1019,7 @@
       // (which are editable branches) made it read as a second setting. No
       // count here -- the editor holds the definition, and how many elements
       // there are is decided when an instance starts.
+      /** @param {{coll: string, quorum: string}} w */
       const say = (w) => quorumWord(w.quorum) + ' ' + w.coll;
       const chip = document.createElement('span');
       chip.className = 'pb-join';
@@ -1138,6 +1162,7 @@
      */
     _adoptLegacyPer() {
       if (this._steps.some((s) => s.collection.length)) return;
+      /** @type {string[]} */
       const dims = [];
       this._steps.forEach((s) => {
         if (s.per && !dims.includes(s.per)) dims.push(s.per);

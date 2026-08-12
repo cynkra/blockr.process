@@ -211,7 +211,12 @@ interface DepToken {
 interface ProcessStack {
   id: string;
   name: string;
-  color: string;
+  /**
+   * Optional, and this editor deliberately omits it: a group is marked by
+   * the multi-instance glyph (`MI_ICON`), not by a colour. The renderer
+   * falls back to its own default.
+   */
+  color?: string;
   /** Member task ids, in table order. */
   blocks: string[];
   /** The `collection` row itself, so the header can edit it in place. */
