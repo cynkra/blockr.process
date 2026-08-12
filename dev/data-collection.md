@@ -21,7 +21,7 @@ and it is also the exact file the blockr.cloud gallery deploys.
              <store>/inbox/*.json ──► worker (headless, dev/worker.R)
                                             │  runs inst/examples/jobs/*.R
   tasks block ──────────────► <store>/events.jsonl ◄── dev/act.R (a person,
-  (chips, assign, send back)     append-only                     from the shell)
+  (chips, assign)                append-only                     from the shell)
                                        │
                                        ▼
                         the board folds the log and redraws
@@ -108,9 +108,12 @@ demo** in the app, or `rm -rf /tmp/blockr-process-demo`.
    click is an event in the store (`actor` = the assignee), not block
    state. The section header counts up, the diagram shows the same count on
    the unit boxes; the gate opens when the count is full.
-6. **Rework, per element**: tick a finished unit, write a note, **send
-   back**. Only that row reopens, the gate re-closes, the note hangs on the
-   element (see the event log).
+6. **Rework, per element**: a unit that was already reviewed has to go back.
+   That is not a board gesture -- the board acts on open work -- it is one
+   event from outside, the way the steward's mail or a mirror would send it
+   (`Rscript blockr.process/dev/act.R review open ana Northgate`, see
+   "Driving it without a browser"). Within a poll only that row reopens, the
+   gate re-closes, and the event log names who sent it back.
 7. **The worker takes over**: approve the data and `consolidate.R` runs,
    then `qa_check.R`, which answers **false** on its first attempt. The
    branch is in the table, so *Reconcile findings* opens and *Approve
@@ -152,8 +155,19 @@ Three moves cover the instance lifecycle:
 
 ```sh
 Rscript blockr.process/dev/act.R review done ana Northgate   # one element
+Rscript blockr.process/dev/act.R review open ana Northgate   # send it back
 Rscript blockr.process/dev/act.R approve_data done mira      # the gate
 Rscript blockr.process/dev/act.R reconcile done ben          # re-arms QA
+```
+
+A note travels the same way, as an ordinary field on the same element:
+
+```r
+blockr.process::instance_event(
+  "review", "note", "totals do not add up", actor = "mira",
+  store = "/tmp/blockr-process-demo", instance = "2026Q1",
+  element = "Northgate"
+)
 ```
 
 and a delivery, the way the platform sends it (any language that can write

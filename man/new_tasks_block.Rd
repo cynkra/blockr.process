@@ -32,10 +32,18 @@ An instance's task list: one section per task, one row per element for the
 "per-element" tasks, with per-row assignment and a status chip that
 writes [instance_event()]s. The toolbar filters (status, person, any grouping
 column the element list carried, e.g. `region`) and acts on the
-selection: bulk-assign, and "send back" -- the rework, which reopens
-exactly the checked rows and re-closes the gate downstream.
+selection: bulk-assign.
 }
 \details{
+The block carries no action-specific gesture beyond that. "Send this back"
+is a decision, and decisions belong in the definition as outcomes: a
+dependent qualifies its predecessor (`fix depends_on review:rejected`), the
+chip then offers `rejected` as a terminal state, and the branch is visible
+in the diagram instead of hidden in a button. Reopening a task that was
+already finished is one event from outside -- [process_act()], an inbox
+message, a mirror -- because the board is where open work is acted on, not
+where history is rewritten.
+
 The block emits [instance_view()], so downstream tables and the BPMN diagram
 redraw on every event. Polling is on the log's size and mtime; an idle
 board redraws nothing.

@@ -2,7 +2,7 @@
 /* The tasks block: the instance's task list, wired to the store.
  *
  * R pushes the whole drawable payload (`tasks-rows`) on every store change;
- * every gesture here -- chip click, assignment, bulk assign, send back --
+ * every gesture here -- chip click, assignment, bulk assign --
  * goes straight back as ONE Shiny input event (`<id>_act`) that R turns
  * into instance-store events. Nothing is owned on this side: the next payload
  * is the truth, including what other people just clicked.
@@ -235,27 +235,6 @@
         this._renderBulk();
       });
       this._bulk.appendChild(assign);
-
-      const note = document.createElement('input');
-      note.type = 'text';
-      note.className = 'tasks-note';
-      note.placeholder = 'note…';
-      this._bulk.appendChild(note);
-
-      const back = document.createElement('button');
-      back.type = 'button';
-      back.className = 'tasks-btn tasks-btn--back';
-      back.textContent = 'send back';
-      back.title = 'Rework: the selected rows go back to open, ' +
-        'and the gate behind them closes again.';
-      back.addEventListener('click', () => {
-        const rows = selRows();
-        if (note.value.trim()) this._act(rows, 'note', note.value.trim());
-        this._act(rows, 'status', 'open');
-        this._sel.clear();
-        this._renderBulk();
-      });
-      this._bulk.appendChild(back);
     }
 
     _renderList() {
