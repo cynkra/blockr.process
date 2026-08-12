@@ -22,3 +22,4 @@ task id of the first unmet dependency -- which is how the task list can
 say "waiting for delivery" instead of a bare "blocked". `NA` for rows
 that are not blocked.
 }
+\keyword{internal}

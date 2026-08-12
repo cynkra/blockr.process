@@ -18,3 +18,4 @@ Named list: key -> list of field -> latest value, where the key
 \description{
 Fold an instance's events into per-task state
 }
+\keyword{internal}

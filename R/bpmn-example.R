@@ -9,6 +9,7 @@
 #'
 #' @importFrom tibble tibble
 #' @export
+#' @keywords internal
 example_quarterly <- function() {
   nodes <- tibble(
     id = c(

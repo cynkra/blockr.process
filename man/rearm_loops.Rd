@@ -33,3 +33,4 @@ The rework rule: `reconcile` finishes, so `qa_check` -- which already
 holds a terminal `false` -- goes back to `open` and is run again. Without
 this a loop is drawn but never travelled.
 }
+\keyword{internal}

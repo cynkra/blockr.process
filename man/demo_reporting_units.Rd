@@ -26,3 +26,4 @@ Other demo:
 \code{\link{new_demo_start_block}()}
 }
 \concept{demo}
+\keyword{internal}

@@ -21,3 +21,4 @@ and nowhere else: reach the quorum and the task is ready; fall short of
 it even if everything still open went your way and it can never be
 reached, so the task is skipped; otherwise wait.
 }
+\keyword{internal}

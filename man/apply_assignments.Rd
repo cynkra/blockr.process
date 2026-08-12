@@ -20,3 +20,4 @@ The instance block's workhorse, exported because the block's expression calls
 it at evaluation time. Ensures the instance columns (`assignee`, `due`, `status`)
 exist and overrides them per task from `assignments`.
 }
+\keyword{internal}

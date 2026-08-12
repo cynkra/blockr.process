@@ -13,3 +13,4 @@ A named list of assignments as expected by [new_assign_block()].
 The life columns of [example_process()] in the shape the instance
 block stores: task id -> assignee/due/status. Used to seed demo boards.
 }
+\keyword{internal}

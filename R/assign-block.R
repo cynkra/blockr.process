@@ -47,6 +47,7 @@ new_assign_block <- function(assignments = list(), ...) {
 #'
 #' @return A named list of assignments as expected by [new_assign_block()].
 #' @export
+#' @keywords internal
 example_assignments <- function() {
   df <- example_process()
   out <- lapply(seq_len(nrow(df)), function(i) {

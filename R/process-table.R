@@ -483,6 +483,7 @@ lower_one <- function(df, g) {
 #' @return An integer: how many must be met.
 #'
 #' @export
+#' @keywords internal
 process_quorum <- function(spec, n) {
   n <- as.integer(n)
   spec <- if (length(spec) != 1L || is.na(spec)) "" else trimws(as.character(spec))
@@ -527,6 +528,7 @@ process_quorum <- function(spec, n) {
 #' @return `"open"`, `"blocked"` or `"skipped"`.
 #'
 #' @export
+#' @keywords internal
 process_gate_status <- function(met, pending, need) {
   if (met >= need) {
     "open"

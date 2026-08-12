@@ -51,6 +51,7 @@ new_process_block <- function(tasks = example_tasks(), ...) {
 #'
 #' @return A list of tasks as expected by [new_process_block()].
 #' @export
+#' @keywords internal
 example_tasks <- function() {
   df <- example_process()
   col <- function(nm, i) if (nm %in% names(df)) df[[nm]][i] else ""

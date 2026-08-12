@@ -42,3 +42,4 @@ Other demo:
 \code{\link{new_demo_delivery_block}()}
 }
 \concept{demo}
+\keyword{internal}

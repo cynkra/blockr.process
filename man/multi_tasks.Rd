@@ -17,3 +17,4 @@ The dimension every task repeats over, resolved through the group it sits
 in (see [process_groups()]). Group rows are containers and
 answer `""`, same as a single task.
 }
+\keyword{internal}

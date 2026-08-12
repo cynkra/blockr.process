@@ -13,6 +13,7 @@
 #' @return The wide table with instance columns applied.
 #'
 #' @export
+#' @keywords internal
 apply_assignments <- function(df, assignments = list()) {
   stopifnot(is.data.frame(df))
   if (!"task" %in% names(df)) {
@@ -123,6 +124,7 @@ build_run_levels <- function(df) {
 #' @return The wide process table (a data frame).
 #'
 #' @export
+#' @keywords internal
 tasks_to_table <- function(tasks = list()) {
   if (!is.list(tasks)) tasks <- list()
   chr <- function(x) {

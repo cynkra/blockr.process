@@ -32,3 +32,4 @@ includes both), which is what the gate asks for.
 `total` unless the group carries a `complete_when` quorum. A counter that
 says "9 / 12" while the gate opens at 11 would be lying by omission.
 }
+\keyword{internal}

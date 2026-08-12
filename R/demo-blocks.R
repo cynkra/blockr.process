@@ -48,6 +48,7 @@
 #' @return A wide process table; see [as_bpmn()] for the column contract.
 #' @family demo
 #' @export
+#' @keywords internal
 demo_collection_process <- function() {
   data.frame(
     task = c(
@@ -108,6 +109,7 @@ demo_collection_process <- function() {
 #' @return A data frame with one row per reporting unit.
 #' @family demo
 #' @export
+#' @keywords internal
 demo_reporting_units <- function() {
   data.frame(
     unit = c(
@@ -128,6 +130,7 @@ demo_reporting_units <- function() {
 #' @return A character vector of names.
 #' @family demo
 #' @export
+#' @keywords internal
 demo_people <- function() {
   c("ana", "ben", "mira", "theo")
 }
@@ -143,6 +146,7 @@ demo_people <- function() {
 #' @return A named list of data frames.
 #' @family demo
 #' @export
+#' @keywords internal
 demo_collections <- function() {
   pool <- demo_reporting_units()
   pool$assignee <- NULL
@@ -167,6 +171,7 @@ demo_collections <- function() {
 #' @return A block.
 #' @family demo
 #' @export
+#' @keywords internal
 new_demo_start_block <- function(store = ".runs", instance = "2026Q1",
                                  source = "", poll = 2, ...) {
   new_start_instance_block(
@@ -188,6 +193,7 @@ new_demo_start_block <- function(store = ".runs", instance = "2026Q1",
 #' @return A data frame with one row per unit.
 #' @family demo
 #' @export
+#' @keywords internal
 demo_deliveries <- function(store, instance, stamp = NULL) {
   tab <- instance_table(store, instance)
   if (!nrow(tab)) {
@@ -239,6 +245,7 @@ demo_deliveries <- function(store, instance, stamp = NULL) {
 #' @return A block.
 #' @family demo
 #' @export
+#' @keywords internal
 new_demo_delivery_block <- function(store = ".runs", instance = "instance",
                                     poll = 2, ...) {
   new_data_block(
@@ -420,6 +427,7 @@ new_demo_delivery_block <- function(store = ".runs", instance = "instance",
 #'   started.
 #' @family demo
 #' @export
+#' @keywords internal
 demo_worker_start <- function(store, jobs, tick = 2) {
   if (!requireNamespace("callr", quietly = TRUE)) {
     warning(

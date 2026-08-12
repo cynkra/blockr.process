@@ -12,3 +12,4 @@ A list of tasks as expected by [new_process_block()].
 \description{
 The quarterly example as a tasks list (the process block's default)
 }
+\keyword{internal}

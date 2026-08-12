@@ -38,6 +38,7 @@
 #' @param process A wide process table.
 #' @return Named character vector: task id -> dimension (`""` for single).
 #' @export
+#' @keywords internal
 multi_tasks <- function(process) {
   process_collection(process)
 }
@@ -268,6 +269,7 @@ instance_status <- function(process, instance_table) {
 #'
 #' @return Character vector, one entry per row of `instance_table`.
 #' @export
+#' @keywords internal
 instance_waiting <- function(process, instance_table) {
   stopifnot(is.data.frame(process), is.data.frame(instance_table))
   if (!nrow(instance_table)) {
@@ -320,6 +322,7 @@ task_joins <- function(process) {
 #' @return A data frame with `task`, `total`, `required`, `done`, `doing`,
 #'   `blocked`, `open`, `pct`, `pct_doing` and `pct_blocked`.
 #' @export
+#' @keywords internal
 instance_counts <- function(process, instance_table) {
   per <- multi_tasks(process)
   multi <- names(per)[nzchar(per)]

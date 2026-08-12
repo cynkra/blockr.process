@@ -15,3 +15,4 @@ model a wide table compiles to. Delivery, validation, a QA gateway with a
 correction loop, approval, publication. Lanes are roles, never people --
 people change, roles do not.
 }
+\keyword{internal}

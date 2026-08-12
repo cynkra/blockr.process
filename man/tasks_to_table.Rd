@@ -27,3 +27,4 @@ Exported because the process block's expression calls it at evaluation
 time. Tolerant of partially-edited tasks: missing fields become empty
 strings, tasks without an id are dropped.
 }
+\keyword{internal}

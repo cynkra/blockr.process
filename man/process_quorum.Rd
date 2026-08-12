@@ -32,3 +32,4 @@ In BPMN terms `all` is a parallel gateway (or a plain multi-instance
 completion), `any` an exclusive merge, and a count or percentage a
 complex gateway / a `completionCondition` over `numberOfCompletedInstances`.
 }
+\keyword{internal}

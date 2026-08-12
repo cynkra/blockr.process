@@ -142,6 +142,7 @@ event_key <- function(task, element = NA_character_) {
 #' @return Named list: key -> list of field -> latest value, where the key
 #'   is the task id, or `task@instance` for multi-instance events.
 #' @export
+#' @keywords internal
 instance_state <- function(store = ".runs", instance = "instance") {
   ev <- instance_events(store, instance)
   state <- list()
@@ -224,6 +225,7 @@ apply_events <- function(df, store = ".runs", instance = "instance", stamp = NUL
 #'
 #' @return `instance_table` with `assignee`, `due`, `status` folded from the store.
 #' @export
+#' @keywords internal
 apply_events_instance <- function(instance_table, store = ".runs", instance = "instance",
                              stamp = NULL) {
   stopifnot(is.data.frame(instance_table))

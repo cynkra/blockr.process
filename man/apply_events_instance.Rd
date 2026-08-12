@@ -29,3 +29,4 @@ The multi-instance counterpart of [apply_events()]: rows of an
 folded onto them. Single rows (no `element`) read the same events
 [apply_events()] reads, so the two views can never disagree.
 }
+\keyword{internal}
