@@ -4,6 +4,8 @@
 [![lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
+**[Live demo: a quarterly data collection →](https://blockr.cloud/app/data-collection)**
+
 **The organization as a data frame.** A process definition is one wide
 table: one row per task, columns saying who does it, what it waits for, and
 whether a script does it instead of a person. That table is the model —
@@ -161,15 +163,26 @@ Two vignettes cover the parts that leave the R session:
 
 ## Demo
 
-`dev/data-collection-demo/` is the whole thing running: eight reporting
-units, real scripts, a delivery platform, a rework loop. Its README is a
-click script.
+**[Try it live: a quarterly data collection][demo]** — eight reporting units,
+real scripts running in a worker, a delivery platform writing into the inbox,
+and a rework loop the diagram travels.
 
-```sh
-cd dev/data-collection-demo
-Rscript -e 'shiny::runApp(".", port = 3838, host = "0.0.0.0")'
-Rscript worker.R      # second terminal
+Open one instance and it is the whole story: the task list unfolds per unit,
+"Simulate delivery" writes an inbox message that the *worker* turns into an
+event, the QA check answers `false` on its first attempt so the rework branch
+opens, and after the reconciliation it answers `true`. Open a second browser
+window on the same demo and you are both watching the same event log.
+
+The same board runs locally, from the installed package:
+
+```r
+source(system.file("examples/data-collection.R", package = "blockr.process"))
 ```
+
+`dev/data-collection.md` is the click script — what to show, in order — and
+`dev/data-collection.R` runs the board against local source checkouts.
+
+[demo]: https://blockr.cloud/app/data-collection
 
 ## Design notes
 
