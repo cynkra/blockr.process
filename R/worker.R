@@ -156,6 +156,61 @@ resolve_script <- function(jobs, script) {
   path
 }
 
+#' Resolve `pkg::fun` against the worker's package allowlist
+#'
+#' The second thing a `script` cell may be: a function in an installed
+#' package, rather than a file in the jobs directory. Better for a
+#' deployment -- the package is already in the image, `packageVersion()` is a
+#' truer `code_version` than a hash of a folder, and the function is
+#' testable and documented like any other.
+#'
+#' It needs its own jail, and for the same reason the jobs directory has
+#' one: the `script` cell is edited in a browser. Left open, `pkg::fun`
+#' would let whoever may edit a process call `system()` -- a bigger hole
+#' than the path traversal the jobs jail closes. So a deployment declares
+#' which packages may be reached (`run_worker(packages =)`), nothing is
+#' callable by default, and the form is a strict `pkg::fun` -- no `:::`, no
+#' arguments, no expression.
+#'
+#' @param script Value of the task's `script` column.
+#' @param packages Character vector of allowed package names.
+#'
+#' @return `list(pkg, fun)`.
+#' @noRd
+resolve_function <- function(script, packages) {
+  if (!grepl("^[a-zA-Z][a-zA-Z0-9.]*::[a-zA-Z._][a-zA-Z0-9._]*$", script)) {
+    stop("not a plain 'pkg::fun' reference: ", script,
+         " (no ':::', no arguments, no expression)", call. = FALSE)
+  }
+  parts <- strsplit(script, "::", fixed = TRUE)[[1]]
+  pkg <- parts[[1]]
+  fun <- parts[[2]]
+
+  if (!length(packages)) {
+    stop("this worker runs no package functions: pass ",
+         "run_worker(packages = \"", pkg, "\") to allow it", call. = FALSE)
+  }
+  if (!pkg %in% packages) {
+    stop("package '", pkg, "' is not in the worker's allowlist (",
+         paste(packages, collapse = ", "), ")", call. = FALSE)
+  }
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    stop("package '", pkg, "' is not installed on this worker", call. = FALSE)
+  }
+  if (!is.function(tryCatch(getExportedValue(pkg, fun),
+                            error = function(e) NULL))) {
+    stop("'", script, "' is not an exported function of '", pkg, "'",
+         call. = FALSE)
+  }
+  list(pkg = pkg, fun = fun)
+}
+
+#' Is this `script` cell a package function rather than a file?
+#' @noRd
+is_function_script <- function(script) {
+  !is.null(script) && !is.na(script) && grepl("::", script, fixed = TRUE)
+}
+
 #' Which interpreter runs this file
 #' @noRd
 script_interpreter <- function(path, interpreters) {
@@ -322,6 +377,7 @@ worker_alive <- function(store = ".runs", stale = 120) {
 #'
 #' @return Character vector of re-armed task ids, invisibly.
 #' @export
+#' @keywords internal
 rearm_loops <- function(df, finished, store = ".runs", instance = "instance",
                         element = NULL) {
   tasks <- process_tasks(df)
@@ -355,7 +411,9 @@ rearm_loops <- function(df, finished, store = ".runs", instance = "instance",
 #' @noRd
 run_script_task <- function(task, df, store, instance, jobs, element = NULL,
                             interpreters = process_interpreters(),
-                            version = "", quiet = FALSE) {
+                            packages = character(), version = "",
+                            quiet = FALSE) {
+  script <- task_cell(df, task, "script")
   params <- task_cell(df, task, "params")
   retries <- suppressWarnings(as.integer(task_cell(df, task, "retry", "0")))
   if (is.na(retries)) retries <- 0L
@@ -378,37 +436,53 @@ run_script_task <- function(task, df, store, instance, jobs, element = NULL,
   # Refusing to run is an outcome like any other, and it belongs in the log
   # in the same shape as a crash: the task fails, the reason is readable,
   # nothing is executed.
-  path <- tryCatch(resolve_script(jobs, task_cell(df, task, "script")),
-                   error = function(e) e)
-  it <- if (inherits(path, "error")) path else {
-    tryCatch(script_interpreter(path, interpreters), error = function(e) e)
-  }
-  if (inherits(it, "error")) {
-    writeLines(paste0("blockr.process: ", conditionMessage(it)), logfile)
-    instance_event(task, "error", conditionMessage(it), "worker", store,
+  # Two things a `script` cell may be -- a file in the jobs directory, or a
+  # function in an allowed package -- and each is resolved through its own
+  # jail.
+  spec <- tryCatch(
+    if (is_function_script(script)) {
+      ref <- resolve_function(script, packages)
+      it <- interpreters[["r"]]
+      list(
+        command = it$command,
+        args = c(it$args, "-e", shQuote(paste0(ref$pkg, "::", ref$fun, "()"))),
+        label = script,
+        version = paste(ref$pkg, as.character(utils::packageVersion(ref$pkg)))
+      )
+    } else {
+      path <- resolve_script(jobs, script)
+      it <- script_interpreter(path, interpreters)
+      list(command = it$command, args = c(it$args, shQuote(path)),
+           label = basename(path), version = version)
+    },
+    error = function(e) e
+  )
+  if (inherits(spec, "error")) {
+    writeLines(paste0("blockr.process: ", conditionMessage(spec)), logfile)
+    instance_event(task, "error", conditionMessage(spec), "worker", store,
                    instance, element = elem)
     instance_event(task, "log", rel_to_store(logfile, store), "worker", store,
                    instance, element = elem)
     instance_event(task, "status", "failed", "worker", store, instance,
                    element = elem)
-    if (!quiet) message("* ", tag, " refused: ", conditionMessage(it))
+    if (!quiet) message("* ", tag, " refused: ", conditionMessage(spec))
     return(list(outcome = "failed", retry = FALSE))
   }
 
   if (!quiet) {
-    message("* ", tag, " -> ", basename(path),
+    message("* ", tag, " -> ", spec$label,
             if (nzchar(params)) paste0(" [", params, "]") else "",
             if (attempt > 1) paste0(" (attempt ", attempt, ")") else "")
   }
-  if (nzchar(version)) {
-    instance_event(task, "code_version", version, "worker", store, instance,
-                   element = elem)
+  if (nzchar(spec$version)) {
+    instance_event(task, "code_version", spec$version, "worker", store,
+                   instance, element = elem)
   }
 
   t0 <- Sys.time()
   code <- suppressWarnings(system2(
-    it$command,
-    c(it$args, shQuote(path)),
+    spec$command,
+    spec$args,
     stdout = logfile, stderr = logfile,
     timeout = limit,
     env = c(
@@ -552,6 +626,10 @@ drop_parallel_elements <- function(mine, process) {
 #' @param inbox Ingest the file inbox on every tick.
 #' @param interpreters Extension -> interpreter map, see
 #'   [process_interpreters()].
+#' @param packages Packages whose functions a `script` cell may name
+#'   (`"mypkg::forecast"`). The allowlist for the function form, and the
+#'   counterpart of `jobs` for the file form: empty by default, so a
+#'   deployment has to say which code it is willing to run.
 #' @param quiet Suppress progress messages.
 #'
 #' @return The table with the instance applied, invisibly.
@@ -574,7 +652,7 @@ run_worker <- function(process, store = ".runs", instance = "instance",
                        jobs = ".", wait = TRUE, tick = 2, timeout = 900,
                        lock = TRUE, inbox = TRUE,
                        interpreters = process_interpreters(),
-                       quiet = FALSE) {
+                       packages = character(), quiet = FALSE) {
   stopifnot(is.data.frame(process))
   dir.create(store, showWarnings = FALSE, recursive = TRUE)
   instance <- resolve_instance(store, instance)
@@ -611,7 +689,7 @@ run_worker <- function(process, store = ".runs", instance = "instance",
         res <- run_script_task(
           mine$task[i], df, store, instance, jobs,
           element = mine$element[i], interpreters = interpreters,
-          version = version, quiet = quiet
+          packages = packages, version = version, quiet = quiet
         )
         backoff <- backoff || isTRUE(res$retry)
       }

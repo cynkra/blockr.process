@@ -193,3 +193,126 @@ test_that("process_act writes the events a person's click stands for", {
   expect_true(all(ev$element == "north"))
   expect_true(all(ev$actor == "ana"))
 })
+
+# ---- the function form: `script` may name pkg::fun -----------------------
+
+# A worker deployment usually has its jobs in a package already; naming the
+# function directly means there is no jobs directory to ship, mount or
+# version separately. The tests below install a throwaway package so the
+# child process can actually resolve it -- `pkgload::load_all()` is invisible
+# to a subprocess, which is the whole reason this needs a real install.
+tiny_package <- function(name = "procdemo") {
+  lib <- tempfile("lib")
+  dir.create(lib)
+  src <- file.path(tempfile("src"), name)
+  dir.create(file.path(src, "R"), recursive = TRUE)
+  writeLines(c(
+    paste0("Package: ", name), "Title: Throwaway", "Version: 0.4.2",
+    "Description: Throwaway package for the worker tests.",
+    "Author: t", "Maintainer: t <t@example.com>", "License: GPL-3"
+  ), file.path(src, "DESCRIPTION"))
+  writeLines("export(note)", file.path(src, "NAMESPACE"))
+  writeLines(c(
+    "note <- function() {",
+    "  el <- Sys.getenv('PROC_ELEMENT')",
+    "  writeLines(",
+    "    paste(Sys.getenv('PROC_TASK'), el),",
+    "    file.path(Sys.getenv('PROC_ARTIFACTS'), paste0('note-', el, '.txt'))",
+    "  )",
+    "}"
+  ), file.path(src, "R", "note.R"))
+  out <- system2(
+    file.path(R.home("bin"), "R"),
+    c("CMD", "INSTALL", "--no-docs", "--no-byte-compile",
+      paste0("--library=", shQuote(lib)), shQuote(src)),
+    stdout = FALSE, stderr = FALSE
+  )
+  if (!identical(out, 0L)) skip("could not install the throwaway package")
+  lib
+}
+
+fun_process <- function(script = "procdemo::note") {
+  data.frame(
+    task = "annotate", name = "Annotate", role = "system", depends_on = "",
+    script = script, stringsAsFactors = FALSE
+  )
+}
+
+test_that("a task can name a function in an allowed package", {
+  skip_on_cran()
+  skip_if_not_installed("withr")
+  lib <- tiny_package()
+  store <- tempfile()
+
+  withr::with_libpaths(lib, action = "prefix", {
+    withr::with_envvar(c(R_LIBS = lib), {
+      run_worker(fun_process(), store = store, jobs = tempdir(),
+                 packages = "procdemo", wait = FALSE, quiet = TRUE)
+    })
+  })
+
+  ev <- instance_events(store, "instance")
+  expect_equal(utils::tail(ev$value[ev$field == "status"], 1), "done")
+  # the package version IS the code version -- truer than a hash of a folder
+  expect_equal(ev$value[ev$field == "code_version"], "procdemo 0.4.2")
+  # the function ran in a real subprocess and saw the same environment a
+  # script would
+  expect_true(file.exists(
+    file.path(store, "instance", "artifacts", "note-.txt")
+  ))
+})
+
+test_that("a package not on the allowlist is refused, not run", {
+  skip_on_cran()
+  skip_if_not_installed("withr")
+  lib <- tiny_package()
+  store <- tempfile()
+
+  withr::with_libpaths(lib, action = "prefix", {
+    run_worker(fun_process(), store = store, jobs = tempdir(),
+               packages = "somethingelse", wait = FALSE, quiet = TRUE)
+  })
+
+  ev <- instance_events(store, "instance")
+  expect_equal(utils::tail(ev$value[ev$field == "status"], 1), "failed")
+  expect_match(ev$value[ev$field == "error"], "allowlist")
+  expect_false(any(ev$field == "took"))
+})
+
+test_that("with no allowlist the function form is off entirely", {
+  store <- tempfile()
+  run_worker(fun_process(), store = store, jobs = tempdir(), wait = FALSE,
+             quiet = TRUE)
+
+  ev <- instance_events(store, "instance")
+  expect_equal(utils::tail(ev$value[ev$field == "status"], 1), "failed")
+  expect_match(ev$value[ev$field == "error"], "runs no package functions")
+})
+
+test_that("only a plain pkg::fun reference is accepted", {
+  # the allowlist would pass, but the reference itself must not be a way to
+  # smuggle in an expression
+  bad <- c(
+    "base:::Sys.setenv", "base::system('rm -rf /')", "base::q()",
+    "utils::download.file(x)", "base::system;base::q"
+  )
+  for (script in bad) {
+    store <- tempfile()
+    run_worker(fun_process(script), store = store, jobs = tempdir(),
+               packages = c("base", "utils"), wait = FALSE, quiet = TRUE)
+    ev <- instance_events(store, "instance")
+    expect_equal(utils::tail(ev$value[ev$field == "status"], 1), "failed")
+    expect_match(ev$value[ev$field == "error"], "plain 'pkg::fun'")
+    expect_false(any(ev$field == "took"))
+  }
+})
+
+test_that("an allowed package must still export the function", {
+  store <- tempfile()
+  run_worker(fun_process("stats::no_such_function"), store = store,
+             jobs = tempdir(), packages = "stats", wait = FALSE, quiet = TRUE)
+
+  ev <- instance_events(store, "instance")
+  expect_equal(utils::tail(ev$value[ev$field == "status"], 1), "failed")
+  expect_match(ev$value[ev$field == "error"], "is not an exported function")
+})

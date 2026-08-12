@@ -213,6 +213,44 @@ deploys the jobs directory decides what may run**, not whoever edits the
 process. Keep the jobs directory under version control and deploy it like
 code.
 
+## Calling a function instead of a file
+
+`script` may also name an exported function of an installed package:
+
+```{r, eval = FALSE}
+process <- data.frame(
+  task = "forecast", name = "Forecast", role = "system", depends_on = "",
+  script = "mypkg::forecast"
+)
+
+run_worker(process, store = store, packages = "mypkg")
+```
+
+This is usually the better shape for a deployment. The package is already in
+the image, so there is no jobs directory to ship, mount or version
+separately; `code_version` becomes the package version, which is a truer
+answer than a hash of a folder; and the job is a documented, tested,
+`R CMD check`ed function like any other.
+
+Two things stay exactly as they are, on purpose:
+
+- **It still runs in a subprocess** (`Rscript --vanilla -e 'mypkg::forecast()'`).
+  Calling in-process would cost you the timeout (you cannot reliably
+  interrupt arbitrary R or C code in the worker's own session), crash
+  isolation (a segfault or an out-of-memory would take the worker with it),
+  and the per-attempt log file. R startup is a fraction of a second; a real
+  job is not.
+- **The contract is the same.** The function takes no arguments and reads
+  `PROC_ELEMENT`, `PROC_ATTEMPT`, `PROC_ARTIFACTS` and the rest from its
+  environment, exactly like a script. So the two forms are interchangeable
+  and a task can move from one to the other without anything else changing.
+
+`packages` is an **allowlist, empty by default** — the same jail the jobs
+directory is, for the same reason. A process definition is edited in a
+browser; without the allowlist, `script` could name `base::system` and
+whoever may edit a process could run anything the worker can. Only a plain
+`pkg::fun` is accepted: no `:::`, no arguments, no expression.
+
 ## Other languages
 
 The extension picks the interpreter: `.R` → `Rscript --vanilla`, `.sh` →

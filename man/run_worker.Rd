@@ -15,6 +15,7 @@ run_worker(
   lock = TRUE,
   inbox = TRUE,
   interpreters = process_interpreters(),
+  packages = character(),
   quiet = FALSE
 )
 }
@@ -43,6 +44,11 @@ refuses to start.}
 
 \item{interpreters}{Extension -> interpreter map, see
 [process_interpreters()].}
+
+\item{packages}{Packages whose functions a `script` cell may name
+(`"mypkg::forecast"`). The allowlist for the function form, and the
+counterpart of `jobs` for the file form: empty by default, so a
+deployment has to say which code it is willing to run.}
 
 \item{quiet}{Suppress progress messages.}
 }

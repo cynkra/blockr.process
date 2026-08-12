@@ -120,7 +120,7 @@ architects already have.
 | `task`, `name` | the id and the label |
 | `role` | who may act. Becomes a lane; `system` means nobody |
 | `depends_on` | flow, comma separated. `qa_check:false` waits for an outcome |
-| `script` | a file in the jobs directory; the worker runs it |
+| `script` | `forecast.R` (a file in the jobs directory) or `mypkg::forecast` (a function in an allowed package); the worker runs it |
 | `collection` | **this row is a multi-instance group**, repeating per element |
 | `parent` | which group a task is in |
 | `join` | how many dependencies are enough: `all`, `any`, `n=3`, `pct=90` |
