@@ -54,9 +54,11 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="blockrprocess">blockr.process<a class="anchor" aria-label="anchor" href="#blockrprocess"></a>
 </h1></div>
-<!-- badges: start -->
-
 <p><strong><a href="https://blockr.cloud/app/data-collection" class="external-link">Live demo: a quarterly data collection →</a></strong></p>
+<blockquote>
+<p><strong>A working prototype.</strong> Not a sketch: it runs real processes, executes the tasks that are scripts in a headless worker, and takes in events from systems outside the app. The live demo above is the whole thing end to end.</p>
+<p>It is also new. blockr.process is the successor to <a href="https://github.com/cynkra/blockr.task" class="external-link">blockr.task</a>, and the model it arrives at (the wide table, the event log, the multi-instance group) has not yet met enough real processes to be called settled. <strong>Expect the API to change:</strong> function names, column names and the block interface may all move before a stable release. Pin a commit if you build on it.</p>
+</blockquote>
 <p><strong>The organization as a data frame.</strong> A process definition is one wide table: one row per task, columns saying who does it, what it waits for, and whether a script does it instead of a person. That table is the model; everything else in the package is a view of it or a fold over its event log.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">process</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -314,12 +316,7 @@
 </ul>
 </div>
 
-<div class="dev-status">
-<h2 data-toc-skip>Dev status</h2>
-<ul class="list-unstyled">
-<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="lifecycle"></a></li>
-</ul>
-</div>
+
 
   </aside>
 </div>
