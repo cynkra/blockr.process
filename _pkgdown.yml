@@ -1,0 +1,102 @@
+url: https://cynkra.github.io/blockr.process/
+
+template:
+  bootstrap: 5
+  light-switch: true
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [demo, github]
+  components:
+    demo:
+      text: Live demo
+      href: https://blockr.cloud/app/data-collection
+    articles:
+      text: Articles
+      menu:
+      - text: Running scripts
+        href: articles/running-scripts.html
+      - text: Talking to other systems
+        href: articles/external-systems.html
+
+# Two layers, one namespace (dev/architecture.md): the engine -- pure R, no
+# shiny -- and the blocks on top. The index reads in that order. Everything
+# the namespace exports beyond this is machinery (functions that emitted
+# block expressions call, demo scaffolding, semantics helpers) and is
+# marked @keywords internal at the source.
+reference:
+- title: The process table
+  desc: >
+    A process definition is one wide table; these read it. Pure R.
+  contents:
+  - example_process
+  - process_tasks
+  - process_status
+  - process_groups
+  - process_version
+
+- title: Instances and the event log
+  desc: >
+    An instance is an append-only event log; opening one stamps the
+    definition and the element list into it. Current state is a fold over
+    the lines. Pure R.
+  contents:
+  - start_instance
+  - instance_event
+  - instance_events
+  - instance_view
+  - instance_table
+  - instance_status
+  - instance_log
+  - instance_latest
+  - instance_definition
+  - instance_collection
+  - expand_instance
+  - apply_events
+
+- title: The worker
+  desc: >
+    The only thing in the package that executes anything -- a plain R
+    process, deliberately outside the app.
+  contents:
+  - run_worker
+  - process_act
+  - worker_alive
+  - process_interpreters
+  - code_version
+
+- title: The inbox
+  desc: >
+    How a system that is not R moves a process forward: one JSON file per
+    message, the file name is the idempotency key.
+  contents:
+  - inbox_dir
+  - write_inbox_message
+  - ingest_inbox
+
+- title: Blocks
+  desc: The process on a blockr board.
+  contents:
+  - new_process_block
+  - new_start_instance_block
+  - new_tasks_block
+  - new_bpmn_block
+  - new_runstate_block
+  - new_event_log_block
+  - new_assign_block
+
+- title: BPMN
+  desc: >
+    The diagram half -- tidy model, interchange XML, auto-layout, widget.
+    Pure R plus a bundled JS renderer; depends on nothing else in the
+    package.
+  contents:
+  - bpmn
+  - as_bpmn
+  - bpmn_xml
+  - write_bpmn
+  - layout_bpmn
+  - bpmn_widget
+  - bpmnWidgetOutput
+  - renderBpmnWidget

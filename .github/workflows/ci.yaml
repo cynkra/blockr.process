@@ -1,0 +1,38 @@
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
+  merge_group:
+
+name: ci
+
+jobs:
+  ci:
+    uses: BristolMyersSquibb/blockr.ci/.github/workflows/ci.yaml@main
+    secrets: inherit
+    permissions:
+      contents: write
+
+  # Type-check the hand-written JS in inst/js (tsconfig.json; opt-in
+  # per file via // @ts-check). No build step — checking only.
+  typecheck-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npx -y -p typescript@~6.0.0 tsc
+
+  # The model semantics are implemented twice on purpose -- once in R
+  # (process-table.R) and once in the editor's JS (inst/js/process-block.js)
+  # -- so the JS suite mirrors the R one and both have to stay green.
+  test-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test

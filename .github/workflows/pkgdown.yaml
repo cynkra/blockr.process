@@ -1,0 +1,12 @@
+on:
+  push:
+    branches: main
+
+name: pkgdown
+
+jobs:
+  pkgdown:
+    uses: BristolMyersSquibb/blockr.ci/.github/workflows/pkgdown.yaml@main
+    secrets: inherit
+    permissions:
+      contents: write
