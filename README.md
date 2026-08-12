@@ -2,6 +2,8 @@
 
 **[Live demo: a quarterly data collection →](https://blockr.cloud/app/data-collection)**
 
+[Reference documentation](https://cynkra.github.io/blockr.process/)
+
 > A working prototype. It runs processes, executes the tasks that are
 > scripts in a headless worker, and picks up events from other systems; the
 > live demo above does all three.
@@ -148,7 +150,7 @@ columns is a valid process.
 |---|---|
 | `new_process_block()` | the editor: the list is the process, with a rail drawing the flow |
 | `new_start_instance_block()` | open an instance from a definition and an element list |
-| `new_tasks_block()` | the task list: chips, assignment, send-back. Writes events |
+| `new_tasks_block()` | the task list: chips, filters, assignment. Writes events |
 | `new_bpmn_block()` | the diagram, status painted on. Passes the table through |
 | `new_instance_state_block()` | fold a store onto an incoming definition, live |
 | `new_event_log_block()` | the audit history, newest first |
