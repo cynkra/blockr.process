@@ -7,6 +7,10 @@ node_modules/
 # Working screenshots, not part of the package
 _screenshots/
 
+# The pkgdown site is published from gh-pages by the pkgdown workflow, so a
+# local build_site() (which defaults to docs/) is scratch, not source.
+docs/
+
 # Event stores written by the demos and by run_worker()
 _runs/
 .runs/

@@ -8,3 +8,7 @@
 ^_screenshots$
 ^tests/js$
 ^_runs$
+^\.github$
+^_pkgdown\.yml$
+^docs$
+^\.playwright-mcp$
