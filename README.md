@@ -10,11 +10,10 @@
 > API is still moving. Function names, column names and the block interface
 > may change before a stable release. Pin a commit if you depend on it.
 
-**The organization as a data frame.** A process definition is one wide
-table: one row per task, columns saying who does it, what it waits for, and
-whether a script does it instead of a person. That table is the model;
-everything else in the package is a view of it or a fold over its event
-log.
+A process definition is one wide table: one row per task, with columns for
+who does it, what it waits for, and whether a script does it instead of a
+person. That table is the model. Everything else in the package either
+displays it or folds its event log.
 
 ```r
 process <- data.frame(
@@ -26,18 +25,19 @@ process <- data.frame(
 )
 ```
 
-From that one table you get, with no further modelling:
+From that one table you get:
 
-- a **BPMN 2.0 diagram** with live status painted on (start/end events,
-  gateways, lanes and multi-instance markers are derived, not drawn),
-- a **task list** people work in, where every click is an event,
-- a **worker** that runs the tasks that are scripts,
-- an **event log** that is the audit trail, because it is the storage.
+- a BPMN 2.0 diagram with live status on it (start and end events,
+  gateways, lanes and multi-instance markers are derived, not drawn)
+- a task list people work in, where every click is an event
+- a worker that runs the tasks that are scripts
+- an event log, which is also the audit trail, since state is stored
+  nowhere else
 
-Built on [blockr](https://github.com/BristolMyersSquibb/blockr): the table
-flows through a board, so any blockr block composes with it: a
-`dplyr::filter(assignee == "ana")` block is a personal task view, and a
-table block is a management report.
+It is built on [blockr](https://github.com/BristolMyersSquibb/blockr), so
+the table flows through a board and any blockr block can work on it. A
+`dplyr::filter(assignee == "ana")` block gives one person their task list; a
+table block gives management a report.
 
 ## Installation
 
@@ -65,7 +65,7 @@ pak::pak("cynkra/blockr.process")
 - **Instance**: `start_instance()` stamps the definition and the element
   list into the log. Every click, every script, every message after that is
   one appended line. Current state is the latest event per (task, element,
-  field), so the history is complete by construction.
+  field), so you get the full history without writing it separately.
 - **Execution**: `run_worker()` is a headless R process. A live Shiny
   session never holds workflow state, so closing the browser does not stop
   production and two people watching see the same thing.
@@ -116,8 +116,8 @@ instance_view(store, "2026Q1")[, c("task", "element", "status")]
 ## The table's vocabulary
 
 The vocabulary is BPMN 2.0 throughout: process, task, lane,
-multi-instance, collection, element, instance, assignee. Process
-architects can read a definition without a glossary.
+multi-instance, collection, element, instance, assignee. Anyone who knows
+BPMN can read a definition without learning new terms.
 
 | column | what it says |
 |---|---|
