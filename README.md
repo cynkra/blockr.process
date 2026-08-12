@@ -1,10 +1,17 @@
 # blockr.process
 
-<!-- badges: start -->
-[![lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-<!-- badges: end -->
-
 **[Live demo: a quarterly data collection →](https://blockr.cloud/app/data-collection)**
+
+> **A working prototype.** Not a sketch: it runs real processes, executes the
+> tasks that are scripts in a headless worker, and takes in events from
+> systems outside the app. The live demo above is the whole thing end to end.
+>
+> It is also new. blockr.process is the successor to
+> [blockr.task](https://github.com/cynkra/blockr.task), and the model it
+> arrives at (the wide table, the event log, the multi-instance group) has
+> not yet met enough real processes to be called settled. **Expect the API to
+> change:** function names, column names and the block interface may all move
+> before a stable release. Pin a commit if you build on it.
 
 **The organization as a data frame.** A process definition is one wide
 table: one row per task, columns saying who does it, what it waits for, and
