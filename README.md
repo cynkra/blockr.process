@@ -2,7 +2,7 @@
 
 **[Live demo: a quarterly data collection →](https://blockr.cloud/app/data-collection)**
 
-> **A working prototype.** Not a sketch: it runs real processes, executes the
+> **A working prototype.** Runs real processes, executes the
 > tasks that are scripts in a headless worker, and takes in events from
 > systems outside the app. The live demo above is the whole thing end to end.
 >
