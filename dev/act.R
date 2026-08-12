@@ -1,6 +1,6 @@
-# A person acting from the shell -- exactly what the status chip in the
+# A person acting from the shell: exactly what the status chip in the
 # tasks block does, one layer down. Useful to drive the demo without a
-# browser, and the honest answer to "can I script this?".
+# browser, or to script an action.
 #
 #   Rscript blockr.process/dev/act.R review done ana Northgate
 #   Rscript blockr.process/dev/act.R approve_data done mira

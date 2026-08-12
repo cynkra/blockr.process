@@ -16,7 +16,7 @@ A task whose `role` is `system` and whose `script` names a file is run by
 the **worker**: a plain R process, started outside the app, that reads the
 event log, runs what is ready, and appends what happened.
 
-Nothing about it is clever, and that is the design. The board never starts
+The board never starts
 a script and holds no instance state, so closing the browser does not stop
 production, two people watching see the same thing, and the worker can be
 killed and restarted at any moment without losing more than the time in
@@ -108,7 +108,7 @@ process <- data.frame(
 
 ## A script that answers a question
 
-A check does not report success or failure, it reports an **answer**, and
+A check reports an **answer** rather than a plain success or failure, and
 the answer routes the process. One line on stdout:
 
 ```r
@@ -137,10 +137,10 @@ run_worker(process, store = st, jobs = jobs, wait = FALSE, quiet = TRUE)
 process_status(apply_events(process, st, "instance"))
 ```
 
-`fix` is open, `publish` is **skipped** — its gate asked for an outcome
-that will never come. Nobody wrote an if-statement; the branch is in the
-table. When `fix` is done the check is re-armed and runs again, which is
-the rework loop a DAG cannot express.
+`fix` is open, `publish` is **skipped**: its gate asked for an outcome
+that will never come. The branch is in the table, not in code. When `fix`
+is done the check is re-armed and runs again, a rework loop a plain DAG
+cannot express.
 
 ## Once per element
 
@@ -195,16 +195,16 @@ process <- data.frame(
 ```
 
 A task that runs out of attempts stays `failed`, and the worker reports
-what the instance is stuck on. There is no automatic rollback: the process
-is a record of what happened, and what happened was a failure.
+what the instance is stuck on. There is no automatic rollback; the failure
+is recorded like any other event.
 
 ## The jobs directory is a jail
 
 `script` is a **name inside** the jobs directory, never a path out of it.
 Absolute paths, `~` and any `..` segment are refused before the filesystem
 is touched, and a symlink pointing out of the directory is caught after.
-Refusing is an outcome like any other — the task fails, an `error` event
-carries the reason, nothing is executed.
+Refusing is an ordinary outcome: the task fails, an `error` event carries
+the reason, and nothing is executed.
 
 This matters because a process definition can be edited in a browser by
 whoever may edit processes, while the worker runs on a machine that can
@@ -230,23 +230,23 @@ This is usually the better shape for a deployment. The package is already in
 the image, so there is no jobs directory to ship, mount or version
 separately; `code_version` becomes the package version, which is a truer
 answer than a hash of a folder; and the job is a documented, tested,
-`R CMD check`ed function like any other.
+`R CMD check`ed function.
 
-Two things stay exactly as they are, on purpose:
+Everything else stays as it is, on purpose:
 
 - **It still runs in a subprocess** (`Rscript --vanilla -e 'mypkg::forecast()'`).
   Calling in-process would cost you the timeout (you cannot reliably
   interrupt arbitrary R or C code in the worker's own session), crash
   isolation (a segfault or an out-of-memory would take the worker with it),
-  and the per-attempt log file. R startup is a fraction of a second; a real
-  job is not.
+  and the per-attempt log file. R startup takes a fraction of a second,
+  negligible against any real job.
 - **The contract is the same.** The function takes no arguments and reads
   `PROC_ELEMENT`, `PROC_ATTEMPT`, `PROC_ARTIFACTS` and the rest from its
   environment, exactly like a script. So the two forms are interchangeable
   and a task can move from one to the other without anything else changing.
 
-`packages` is an **allowlist, empty by default** — the same jail the jobs
-directory is, for the same reason. A process definition is edited in a
+`packages` is an **allowlist, empty by default**, for the same reason the
+jobs directory is a jail. A process definition is edited in a
 browser; without the allowlist, `script` could name `base::system` and
 whoever may edit a process could run anything the worker can. Only a plain
 `pkg::fun` is accepted: no `:::`, no arguments, no expression.
@@ -275,11 +275,10 @@ the script rather than in the worker's shell.
 
 Every attempt records a `code_version`: the git short sha of the jobs
 directory when it is a working tree, otherwise a content hash of the
-scripts. A year later the log answers "what exactly ran here" without
-anyone having had to remember to write it down.
+scripts. A year later the log still answers exactly which code ran.
 
 It does not record which *packages* were loaded. If that matters, put a
-lockfile in the jobs directory — it is part of the hash — and load it in
+lockfile in the jobs directory (it is part of the hash) and load it in
 the script.
 
 ## Deploying the worker
@@ -292,7 +291,7 @@ answers whether one is running, which a board can display.
 Because the worker is stateless, restarting it is always safe. Pick
 whichever of these your platform gives you:
 
-**cron** — run every five minutes, do the work that is ready, exit:
+**cron**: run every five minutes, do the work that is ready, exit:
 
 ```sh
 */5 * * * * cd /srv/collection && Rscript worker.R >> worker.log 2>&1
@@ -301,7 +300,7 @@ whichever of these your platform gives you:
 with `wait = FALSE` in `worker.R`, so it returns as soon as nothing is
 ready. The lock makes overlapping runs safe.
 
-**systemd** — one long-lived process that waits for people:
+**systemd**: one long-lived process that waits for people:
 
 ```ini
 [Service]
@@ -313,13 +312,13 @@ RestartSec=10
 
 with `wait = TRUE` and a large `timeout`.
 
-**Docker** — the same, as the container's command. Mount the store as a
+**Docker**: the same, as the container's command. Mount the store as a
 volume: it is the only state.
 
-**Posit Connect** — a scheduled job (an R script, not an app) doing exactly
+**Posit Connect**: a scheduled job (an R script, not an app) doing exactly
 what the cron line does. The store has to be on a path the job can write.
 
 In every case the worker needs three things: the store, the jobs
 directory, and whatever credentials the scripts themselves need. It does
-not need the app, and the app does not need it — except that without a
-worker, script tasks simply never start.
+not need the app, and the app does not need it; without a worker, script
+tasks never start.

@@ -5,7 +5,7 @@
 #   Rscript blockr.process/dev/worker.R
 #
 # It is a plain R process and knows nothing about Shiny. In production this
-# is a cron entry, a systemd unit or a scheduled job -- see
+# is a cron entry, a systemd unit or a scheduled job; see
 # vignette("running-scripts").
 #
 # The app starts its own worker by default (demo_worker_start()), so run the
@@ -30,7 +30,7 @@ instance <- Sys.getenv("BLOCKR_PROCESS_INSTANCE", unset = "latest")
 instance <- blockr.process::instance_latest(store) %else% instance
 process <- blockr.process::instance_definition(store, instance)
 if (is.null(process)) {
-  stop("no instance in ", store, " -- start one in the app first (the ",
+  stop("no instance in ", store, "; start one in the app first (the ",
        "'Start instance' card), or call start_instance() yourself")
 }
 

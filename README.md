@@ -8,7 +8,7 @@
 
 **The organization as a data frame.** A process definition is one wide
 table: one row per task, columns saying who does it, what it waits for, and
-whether a script does it instead of a person. That table is the model —
+whether a script does it instead of a person. That table is the model;
 everything else in the package is a view of it or a fold over its event
 log.
 
@@ -31,7 +31,7 @@ From that one table you get, with no further modelling:
 - an **event log** that is the audit trail, because it is the storage.
 
 Built on [blockr](https://github.com/BristolMyersSquibb/blockr): the table
-flows through a board, so any blockr block composes with it — a
+flows through a board, so any blockr block composes with it: a
 `dplyr::filter(assignee == "ana")` block is a personal task view, and a
 table block is a management report.
 
@@ -56,12 +56,12 @@ pak::pak("cynkra/blockr.process")
 ```
 
 - **Definition**: a data frame. Edit it in R, in a CSV, or in the process
-  block's editor. It never changes while an instance runs — an instance
+  block's editor. It never changes while an instance runs; an instance
   records the version it started with.
 - **Instance**: `start_instance()` stamps the definition and the element
   list into the log. Every click, every script, every message after that is
   one appended line. Current state is the latest event per (task, element,
-  field), so the history is not a feature anyone can forget to write.
+  field), so the history is complete by construction.
 - **Execution**: `run_worker()` is a headless R process. A live Shiny
   session never holds workflow state, so closing the browser does not stop
   production and two people watching see the same thing.
@@ -92,7 +92,7 @@ start_instance(process, c("north", "south", "east"), "2026Q1", store)
 write_inbox_message(store, "delivery", element = "north",
                     instance = "2026Q1", actor = "platform", id = "d-north")
 
-# the worker ingests it and validates that delivery -- and only that one
+# the worker ingests it and validates that delivery, and only that one
 run_worker(process, store = store, instance = "2026Q1", jobs = jobs,
            wait = FALSE)
 
@@ -111,9 +111,9 @@ instance_view(store, "2026Q1")[, c("task", "element", "status")]
 
 ## The table's vocabulary
 
-BPMN 2.0 throughout (process, task, lane, multi-instance, collection,
-element, instance, assignee), so what you build is nameable in a language
-architects already have.
+The vocabulary is BPMN 2.0 throughout: process, task, lane,
+multi-instance, collection, element, instance, assignee. Process
+architects can read a definition without a glossary.
 
 | column | what it says |
 |---|---|
@@ -128,9 +128,9 @@ architects already have.
 | `sequential` | elements run one at a time |
 | `retry`, `timeout`, `params` | how the worker runs a script |
 
-Three relations, three columns, and they never overlap: `depends_on` is
-flow (a DAG over tasks), `parent` is scope (a tree), `collection` is
-repetition (a property of one row). A dependency may name a group, in
+`depends_on` is flow (a DAG over tasks), `parent` is scope (a tree), and
+`collection` is repetition (a property of one row); the three relations
+never overlap. A dependency may name a group, in
 either direction; BPMN forbids a sequence flow that crosses a sub-process
 boundary, so container edges are lowered onto the group's entries and exits
 before anything reads the table.
@@ -154,20 +154,20 @@ columns is a valid process.
 
 Two vignettes cover the parts that leave the R session:
 
-- `vignette("running-scripts")` — the worker, the jobs directory, retries
+- `vignette("running-scripts")`: the worker, the jobs directory, retries
   and timeouts, what a script receives, and how to deploy it (cron,
   systemd, Docker, Posit Connect).
-- `vignette("external-systems")` — the inbox: how a delivery platform, a
-  database trigger or a CI job moves a process forward, with idempotency
-  and an audit trail. Plus the HTTP and pull variants.
+- `vignette("external-systems")`: the inbox, and how a delivery platform,
+  a database trigger or a CI job moves a process forward through it, with
+  idempotency and an audit trail. Plus the HTTP and pull variants.
 
 ## Demo
 
-**[Try it live: a quarterly data collection][demo]** — eight reporting units,
+**[Try it live: a quarterly data collection][demo]**: eight reporting units,
 real scripts running in a worker, a delivery platform writing into the inbox,
 and a rework loop the diagram travels.
 
-Open one instance and it is the whole story: the task list unfolds per unit,
+Open one instance: the task list unfolds per unit,
 "Simulate delivery" writes an inbox message that the *worker* turns into an
 event, the QA check answers `false` on its first attempt so the rework branch
 opens, and after the reconciliation it answers `true`. Open a second browser
@@ -179,7 +179,7 @@ The same board runs locally, from the installed package:
 source(system.file("examples/data-collection.R", package = "blockr.process"))
 ```
 
-`dev/data-collection.md` is the click script — what to show, in order — and
+`dev/data-collection.md` is the click script (what to show, in order) and
 `dev/data-collection.R` runs the board against local source checkouts.
 
 [demo]: https://blockr.cloud/app/data-collection

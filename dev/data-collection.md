@@ -27,7 +27,7 @@ and it is also the exact file the blockr.cloud gallery deploys.
                         the board folds the log and redraws
 ```
 
-Three writers, one file, no server between them. The board never starts a
+Three writers share one file, with no server between them. The board never starts a
 script and holds no instance state, so closing the browser does not stop
 production, and two people watching see the same thing.
 
@@ -49,12 +49,12 @@ otherwise.
 | `approve_publication` | management | `depends_on qa_check:true` |
 | `forecast` | system, `forecast.R` | once, at the end |
 
-Three columns, three relations that never overlap: `depends_on` is flow (a
-DAG over tasks), `parent` is scope (a tree), `collection` is repetition (a
-property of one row). `parent` is not a weaker `depends_on`. BPMN forbids a
+`depends_on` is flow (a DAG over tasks), `parent` is scope (a tree), and
+`collection` is repetition (a property of one row); the three relations
+never overlap. `parent` is not a weaker `depends_on`. BPMN forbids a
 sequence flow that crosses a sub-process boundary, so the edge out of the
-group is written on the **container** -- `approve_data depends_on
-each_unit` -- and lowered onto the group's exits when anything reads the
+group is written on the **container** (`approve_data depends_on
+each_unit`) and lowered onto the group's exits when anything reads the
 table.
 
 ## Run it
@@ -80,31 +80,31 @@ demo** in the app, or `rm -rf /tmp/blockr-process-demo`.
 ## The click script (what to show, in order)
 
 1. **Process**: the definition. The three front tasks sit in a violet
-   frame, **for each unit** -- a BPMN multi-instance sub-process, and the
+   frame, **for each unit**: a BPMN multi-instance sub-process, and the
    one place the eight exist. The header names the collection and says
    **done when** (the completion quorum, `all` by default). The row below
    the frame carries **waits for all unit**, which is the join where the
    sub-process closes; set *done when* to `pct=90` and the same chip says
    `waits for 90% of unit`. The diagram draws the same thing: `|||` on the
    repeated activities.
-2. **Start instance** -- the moment. The Instance view starts on the card
-   "No instance «2026Q1» -- start it?": period, source (the lists live on
+2. **Start instance**. The Instance view starts on the card
+   "No instance «2026Q1» yet": period, source (the lists live on
    the database: the register, with assignments, or the unassigned list, or
    regions), one click. The card becomes the instance header, the task list
    unfolds, the diagram paints itself, and ana and ben already have their
    five (actor `register` in the event log). Three stay in the pool. Bonus
    line: edit the process afterwards and the header says the change applies
    to the NEXT instance, never this one.
-3. **Tasks**: filter by region, tick the pool rows, **assign to** -- bulk
+3. **Tasks**: filter by region, tick the pool rows, **assign to**: bulk
    assignment, two events.
 4. **Delivery platform**: click **Simulate delivery**. No click of ours; in
-   production the platform writes this. It does not write an event -- it
+   production the platform writes this. It does not write an event; it
    writes `<store>/inbox/delivery-2026Q1-Northgate.json`, and the **worker**
    turns that into an event on its next tick. Within a poll the unit's
    Review flips from *waiting for Data delivery* to *open*, and the worker
    has already run `validate.R` for it. (Watch it from a second browser
    window: same store, same flip.)
-5. **Tasks**: click the status chip -- open → in progress → done. Every
+5. **Tasks**: click the status chip: open → in progress → done. Every
    click is an event in the store (`actor` = the assignee), not block
    state. The section header counts up, the diagram shows the same count on
    the unit boxes; the gate opens when the count is full.
@@ -112,13 +112,13 @@ demo** in the app, or `rm -rf /tmp/blockr-process-demo`.
    back**. Only that row reopens, the gate re-closes, the note hangs on the
    element (see the event log).
 7. **The worker takes over**: approve the data and `consolidate.R` runs,
-   then `qa_check.R` -- which answers **false** on its first attempt. The
+   then `qa_check.R`, which answers **false** on its first attempt. The
    branch is in the table, so *Reconcile findings* opens and *Approve
-   publication* goes grey as **skipped**. Nobody wrote an if-statement.
+   publication* goes grey as **skipped**.
 8. **Rework, on the single track**: mark *Reconcile findings* done. The
    check is re-armed (`false` → `open`), the worker runs it again, attempt 2
    answers **true**, and now approval is ready. That is the loop a DAG
-   cannot express -- both attempts are kept, in `<store>/2026Q1/logs/`.
+   cannot express; both attempts are kept in `<store>/2026Q1/logs/`.
 9. **Approve publication** → `forecast.R` runs and the instance is
    complete. `<store>/2026Q1/artifacts/` holds every file the scripts wrote.
 
@@ -141,10 +141,10 @@ Three moves cover the instance lifecycle:
   the new one. The old instance stays in the log, addressable by its id
   (pin a block to `instance = "2026Q1"` to keep watching it).
 - **Reset demo** (link in the delivery strip): archives the log to
-  `<store>/events-<timestamp>.jsonl` -- nothing is deleted, the append-only
-  story stays true -- and clears the inbox.
-- **From the shell**: `rm -rf /tmp/blockr-process-demo` is the
-  scorched-earth version.
+  `<store>/events-<timestamp>.jsonl` (nothing is deleted) and clears the
+  inbox.
+- **From the shell**: `rm -rf /tmp/blockr-process-demo` removes the store
+  entirely, archives included.
 
 ## Driving it without a browser
 
@@ -172,7 +172,7 @@ blockr.process::write_inbox_message(
 - **Boundary events**: a deadline on a delivery that fires a reminder. It
   is the one thing the table cannot say today; the spec is
   `_blockr.design/open/blockr-process/6-boundary-events.md`.
-- **Late delivery**: same key, one more event -- mechanically identical to
+- **Late delivery**: same key, one more event, mechanically identical to
   the rework.
 - **HTTP ingress**: the inbox is a directory here. Putting a plumber
   endpoint in front of it is twenty lines, see
