@@ -108,9 +108,9 @@ without losing more than the time in between.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/run_worker.html">run_worker</a></span><span class="op">(</span><span class="va">process</span>, store <span class="op">=</span> <span class="va">store</span>, jobs <span class="op">=</span> <span class="va">jobs</span>, wait <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; worker: instance=instance store=/tmp/Rtmpa3Q6S0/file26875762aadb jobs=/tmp/Rtmpa3Q6S0/file26874c632812 code=0067d2a2</span></span>
+<span><span class="co">#&gt; worker: instance=instance store=/tmp/RtmpzeEPYL/file2668380b83cc jobs=/tmp/RtmpzeEPYL/file266818eafc8c code=0067d2a2</span></span>
 <span><span class="co">#&gt; * count -&gt; count.R</span></span>
-<span><span class="co">#&gt;   done in 0.1s  (/tmp/Rtmpa3Q6S0/file26875762aadb/instance/logs/count-1.log)</span></span>
+<span><span class="co">#&gt;   done in 0.2s  (/tmp/RtmpzeEPYL/file2668380b83cc/instance/logs/count-1.log)</span></span>
 <span><span class="co">#&gt; worker: waiting for people on: sign_off</span></span></code></pre></div>
 <p>The worker ran the script, stopped at the task a person owns, and
 said so. Everything it did is in the log:</p>
@@ -118,7 +118,7 @@ said so. Everything it did is in the log:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/instance_log.html">instance_log</a></span><span class="op">(</span><span class="va">store</span>, <span class="st">"instance"</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"task"</span>, <span class="st">"field"</span>, <span class="st">"value"</span>, <span class="st">"actor"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;    task        field                     value  actor</span></span>
 <span><span class="co">#&gt; 6 count       status                      done worker</span></span>
-<span><span class="co">#&gt; 5 count         took                      0.1s worker</span></span>
+<span><span class="co">#&gt; 5 count         took                      0.2s worker</span></span>
 <span><span class="co">#&gt; 4 count          log instance/logs/count-1.log worker</span></span>
 <span><span class="co">#&gt; 3 count code_version                  0067d2a2 worker</span></span>
 <span><span class="co">#&gt; 2 count      attempt                         1 worker</span></span>
