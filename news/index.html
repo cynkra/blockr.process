@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blockr.process</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="blockrprocess-development-version">blockr.process (development version)<a class="anchor" aria-label="anchor" href="#blockrprocess-development-version"></a></h2>
-<ul><li><p><code>script</code> may now name <strong>an exported function of an installed package</strong> (<code>"mypkg::forecast"</code>) as well as a file in the jobs directory. Usually the better shape for a deployment: nothing extra to ship or mount, and the <code>code_version</code> event becomes the package version. It still runs in a subprocess and reads the same <code>PROC_*</code> environment as a script, so the two forms are interchangeable.</p></li>
+<ul><li><p><strong>The tasks block no longer has a “send back” button</strong> (and the bulk note field that only served it is gone with it). It was the one action-specific gesture in an otherwise generic block. Sending work back is a decision, and decisions belong in the definition as outcomes: <code>fix depends_on review:rejected</code> makes <code>rejected</code> a terminal state the chip offers, works the same for a person as for a check script, re-arms through the loop, and shows up in the diagram as a branch. Reopening an already finished task is one event from outside – <code><a href="../reference/process_act.html">process_act()</a></code>, an inbox message, a database mirror – because the board is where open work is acted on, not where history is rewritten.</p></li>
+<li><p><code>script</code> may now name <strong>an exported function of an installed package</strong> (<code>"mypkg::forecast"</code>) as well as a file in the jobs directory. Usually the better shape for a deployment: nothing extra to ship or mount, and the <code>code_version</code> event becomes the package version. It still runs in a subprocess and reads the same <code>PROC_*</code> environment as a script, so the two forms are interchangeable.</p></li>
 <li><p><code>run_worker(packages =)</code> is the allowlist for that form, <strong>empty by default</strong>: a <code>script</code> cell can be edited in a browser, and without the allowlist it could name <code><a href="https://rdrr.io/r/base/system.html" class="external-link">base::system</a></code>. Only a plain <code>pkg::fun</code> is accepted: no <code>:::</code>, no arguments, no expression.</p></li>
 <li><p>pkgdown site (<code>_pkgdown.yml</code>), and CI: <code>R CMD check</code>, <code>tsc</code>, and the JS test suite that mirrors the R one.</p></li>
 <li><p><strong>The engine/UI line is now declared and enforced.</strong> The package is two layers in one namespace: a pure-R engine (table semantics, event store, instances, inbox, worker, BPMN model/XML) with no shiny or blockr dependency, and the blocks on top. <code>dev/architecture.md</code> documents it and an architecture test fails the build if an engine file ever imports UI code. The reference index follows the same line; exports that exist only as machinery (functions emitted block expressions call, demo scaffolding, semantics helpers) are marked internal, still exported but no longer documentation surface.</p></li>

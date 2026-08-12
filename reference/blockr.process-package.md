@@ -15,6 +15,16 @@ auto-layout, widget) lives in the 'bpmn-\*.R' files and depends on
 nothing else here, so either layer can be lifted out into a package of
 its own once the process model stops moving.
 
+## See also
+
+Useful links:
+
+- <https://cynkra.github.io/blockr.process/>
+
+- <https://github.com/cynkra/blockr.process>
+
+- Report bugs at <https://github.com/cynkra/blockr.process/issues>
+
 ## Author
 
 **Maintainer**: Christoph Sax <christoph@cynkra.com>

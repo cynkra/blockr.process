@@ -2,6 +2,18 @@
 
 ## blockr.process (development version)
 
+- **The tasks block no longer has a “send back” button** (and the bulk
+  note field that only served it is gone with it). It was the one
+  action-specific gesture in an otherwise generic block. Sending work
+  back is a decision, and decisions belong in the definition as
+  outcomes: `fix depends_on review:rejected` makes `rejected` a terminal
+  state the chip offers, works the same for a person as for a check
+  script, re-arms through the loop, and shows up in the diagram as a
+  branch. Reopening an already finished task is one event from outside –
+  [`process_act()`](https://cynkra.github.io/blockr.process/reference/process_act.md),
+  an inbox message, a database mirror – because the board is where open
+  work is acted on, not where history is rewritten.
+
 - `script` may now name **an exported function of an installed package**
   (`"mypkg::forecast"`) as well as a file in the jobs directory. Usually
   the better shape for a deployment: nothing extra to ship or mount, and
