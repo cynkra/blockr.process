@@ -1,0 +1,12 @@
+srcjs/node_modules/
+.Rproj.user
+.Rhistory
+.RData
+node_modules/
+
+# Working screenshots, not part of the package
+_screenshots/
+
+# Event stores written by the demos and by run_worker()
+_runs/
+.runs/

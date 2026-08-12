@@ -1,0 +1,90 @@
+.assign-block .assign-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 0 10px;
+}
+
+.assign-block .assign-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assign-block .assign-id {
+  margin-left: 6px;
+  color: #9ca3af;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+}
+
+.assign-block .assign-assignee {
+  width: 84px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  padding: 2px 4px;
+}
+
+.assign-block .assign-assignee:hover,
+.assign-block .assign-assignee:focus {
+  border-color: #e5e7eb;
+  outline: none;
+  background: #fff;
+}
+
+/* the picker variant: the Select component brings its own chrome, so the
+   slot only has to give it room and drop the text-input border */
+.assign-block .assign-assignee-select {
+  width: 110px;
+  padding: 0;
+  border-color: transparent;
+  background: none;
+}
+
+.assign-block .assign-assignee-select:hover,
+.assign-block .assign-assignee-select:focus-within {
+  border-color: transparent;
+  background: none;
+}
+
+.assign-block .assign-due {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: #374151;
+}
+
+.assign-block .assign-due:hover { border-color: #e5e7eb; }
+
+.assign-block .assign-chip {
+  flex: 0 0 auto;
+  min-width: 84px;
+  border: 0;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.assign-block .assign-chip--doing    { background: #dbeafe; color: #2563eb; }
+.assign-block .assign-chip--finished { background: #dcfce7; color: #16a34a; }
+.assign-block .assign-chip--blocked  { background: #fef3c7; color: #d97706; cursor: default; }
+.assign-block .assign-chip--skipped  { background: #f3f4f6; color: #9ca3af; cursor: default; }
+
+.assign-block .assign-empty {
+  color: #9ca3af;
+  font-size: 13px;
+  padding: 10px;
+}

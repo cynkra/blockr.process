@@ -1,0 +1,261 @@
+/* The process editor rides blockr.extra's minidag rail, so the skeleton --
+   rows, rail, dots, pickers -- is styled by minidag.css. What is left here is
+   the row CONTENT a task has and a block does not: the kind icon, the role
+   select, the script field and the outcome chips. */
+
+.process-block {
+  display: block;
+  height: auto;
+}
+
+/* The rail is a control inside a card, not a full-height panel. */
+.process-block .md-deck {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+/* --- the kind icon: the 2x2 of assignee acts and whether it answers --- */
+
+.process-block .md-kind.pb-kind {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: var(--blockr-color-text-secondary, #6b7280);
+  background: #fff;
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+}
+
+.process-block .md-kind.pb-kind svg { width: 13px; height: 13px; }
+
+.process-block .md-kind.pb-kind-decision {
+  color: var(--blockr-color-primary, #2563eb);
+  background: var(--blockr-color-primary-bg, #eff6ff);
+  border-color: #bfdbfe;
+}
+
+/* --- the name: always editable here, since naming tasks IS the work --- */
+
+.process-block .md-name-input {
+  flex: 1 1 auto;
+  min-width: 80px;
+  height: 26px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  padding: 2px 6px;
+}
+
+.process-block .md-name-input:hover,
+.process-block .md-name-input:focus,
+.process-block .pb-script:hover,
+.process-block .pb-script:focus {
+  border-color: var(--blockr-color-border, #e5e7eb);
+  background: #fff;
+  outline: none;
+}
+
+/* --- performer: who or what does this, in a column of its own --- */
+
+/* The alignment fix (mockups/multi-instance.html): a flex trail let
+   `script.R` on one row and a role select on the next start at different x,
+   because each row's name ended somewhere else. Two fixed cells instead --
+   performer, then the mark beside it -- so every row lines up down the deck
+   and an empty cell still holds the column open. */
+.process-block .pb-trail {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 168px 150px;
+  align-items: center;
+  gap: 8px;
+}
+
+.process-block .pb-performer {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.process-block .pb-mark {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.process-block .pb-script {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11.5px;
+  color: var(--blockr-color-text-secondary, #4b5563);
+  padding: 2px 6px;
+}
+
+.process-block .pb-role-slot {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.process-block .pb-role-new {
+  width: 100%;
+  height: 26px;
+  border: 1px solid var(--blockr-color-primary, #2563eb);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 8px;
+  outline: none;
+}
+
+/* --- the outcomes a decision or check answers with --- */
+
+.process-block .pb-outs {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+}
+
+.process-block .pb-out {
+  height: 19px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  background: var(--blockr-color-bg-input, #f3f4f6);
+  color: var(--blockr-color-text-secondary, #6b7280);
+}
+
+.process-block .pb-out-t { background: #dcfce7; color: #16a34a; }
+.process-block .pb-out-f { background: #fee2e2; color: #dc2626; }
+
+/* --- the four-kind picker (minidag's popover, with an icon per row) --- */
+
+/* Wide enough for the longest pair ("Automatic check" / "a script answers")
+   to stay on one line: a wrapped title pushes its icon off the baseline of
+   the rows above it, which is what made the menu look ragged. */
+.process-block .pb-picker { width: 266px; }
+
+.process-block .pb-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.process-block .pb-pick svg {
+  width: 14px;
+  height: 14px;
+  color: var(--blockr-color-text-secondary, #6b7280);
+  flex: 0 0 14px;
+}
+
+.process-block .pb-pick:hover svg { color: var(--blockr-color-primary, #2563eb); }
+
+.process-block .pb-pick b {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.process-block .pb-pick span {
+  font-size: 11px;
+  color: var(--blockr-color-text-muted, #9ca3af);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* --- the join: what a task outside a group waits for --- */
+
+/* A note, not a control. Everything else in this column is editable (the
+   outcome chips are branches you can take); this one is derived from the
+   group above it, so it is set in the same grey as a placeholder. */
+.process-block .pb-join {
+  font-size: 11px;
+  color: var(--blockr-color-text-subtle, #9ca3af);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- the group frame: structure, not emphasis --- */
+
+/* Variant A of mockups/group-weight.html: the hairline the rest of the
+   system draws with, and no fill. minidag's default frame is a touch
+   darker and tinted, which is right on a board where stacks are objects
+   you sort by; here the group is an attribute of the rows inside it. */
+.process-block .md-stackframe {
+  border-color: var(--blockr-color-border, #e5e7eb);
+  background: #fff;
+}
+
+/* The ||| marker reads as a marker, not as a badge: no chip behind it. */
+.process-block .md-cap {
+  background: none;
+  color: var(--blockr-color-text-muted, #6b7280);
+}
+
+/* --- the group header: a multi-instance sub-process --- */
+
+.process-block .pb-groupmeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+}
+
+.process-block .pb-coll-label,
+.process-block .pb-par,
+.process-block .pb-coll-flat {
+  font-size: 11px;
+  color: var(--blockr-color-text-tertiary, #9ca3af);
+  white-space: nowrap;
+}
+
+.process-block .pb-coll-slot {
+  min-width: 132px;
+}
+
+/* isSequential: a toggle that has to keep the weight of the label it
+   replaced, so it is styled off .pb-par above and only gains a hit area.
+   Set, it stops being the default and earns the text colour. */
+.process-block .pb-par {
+  border: 0;
+  background: none;
+  padding: 1px 3px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.process-block .pb-par:hover {
+  background: var(--blockr-color-bg-subtle, #f3f4f6);
+  color: var(--blockr-color-text-muted, #6b7280);
+}
+
+.process-block .pb-par-seq {
+  color: var(--blockr-color-text, #111827);
+}
+
+.process-block .md-stackhead .md-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--blockr-color-text-secondary, #374151);
+}
+
+.process-block .md-stackhead .md-badge,
+.process-block .md-stackchip .md-badge {
+  font-size: 10.5px;
+}

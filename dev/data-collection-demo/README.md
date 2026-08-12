@@ -1,0 +1,160 @@
+# Data collection demo: the whole thing, running
+
+A quarterly data collection from eight reporting units. It is the smallest
+example that still contains every part of blockr.process working for real:
+a process that repeats per unit, people picking tasks up in a browser,
+scripts actually running in a worker process, and an outside system moving
+the process forward without knowing that blockr exists.
+
+```
+  delivery platform ─┐  writes             ┌─ ingests
+                     ▼                     ▼
+              _runs/inbox/*.json ──► worker (worker.R, headless)
+                                            │  runs jobs/*.R
+  tasks block ──────────────► _runs/events.jsonl ◄── act.R (a person, from the shell)
+  (chips, assign, send back)     append-only
+                                       │
+                                       ▼
+                        the board folds the log and redraws
+```
+
+Three writers, one file, no server between them. The board never starts a
+script and holds no instance state, so closing the browser does not stop
+production, and two people watching see the same thing.
+
+## The process
+
+| task | role | what it means |
+|---|---|---|
+| `each_unit` | | the multi-instance group: `collection = unit` |
+| `delivery` | system, **no script** | done when the outside world says so (an inbox message) |
+| `validate` | system, `validate.R` | the worker runs it **once per unit** |
+| `review` | analyst | a person, once per unit |
+| `approve_data` | steward | the gate: waits for `each_unit` to close |
+| `consolidate` | system, `consolidate.R` | once, over every validated delivery |
+| `qa_check` | system, `qa_check.R` | answers `true` / `false` on stdout |
+| `reconcile` | analyst | `depends_on qa_check:false`, loops back into the check |
+| `approve_publication` | management | `depends_on qa_check:true` |
+| `forecast` | system, `forecast.R` | once, at the end |
+
+Three columns, three relations that never overlap: `depends_on` is flow (a
+DAG over tasks), `parent` is scope (a tree), `collection` is repetition (a
+property of one row). `parent` is not a weaker `depends_on`. BPMN forbids a
+sequence flow that crosses a sub-process boundary, so the edge out of the
+group is written on the **container** -- `approve_data depends_on
+each_unit` -- and lowered onto the group's exits when anything reads the
+table.
+
+## Run it
+
+```sh
+cd /workspace/blockr.process/dev/data-collection-demo
+rm -rf _runs                       # fresh store (the app offers to start)
+
+# 1. the board (blockr_port() = first free forwarded port, 3838-3847)
+Rscript -e 'shiny::runApp(".", port = blockr_port(), host = "0.0.0.0")'
+
+# 2. the worker, in a second terminal. Start it AFTER the instance is
+#    opened in the app -- it reads the definition out of the instance.
+Rscript worker.R
+```
+
+## The click script (what to show, in order)
+
+1. **Process**: the definition. The three front tasks sit in a violet
+   frame, **for each unit** -- a BPMN multi-instance sub-process, and the
+   one place the eight exist. The header names the collection and says
+   **done when** (the completion quorum, `all` by default). The row below
+   the frame carries **waits for all unit**, which is the join where the
+   sub-process closes; set *done when* to `pct=90` and the same chip says
+   `waits for 90% of unit`. The diagram draws the same thing: `|||` on the
+   repeated activities.
+2. **Start instance** -- the moment. The Instance view starts on the card
+   "No instance «2026Q1» -- start it?": period, source (the lists live on
+   the database: the register, with assignments, or the unassigned list, or
+   regions), one click. The card becomes the instance header, the task list
+   unfolds, the diagram paints itself, and ana and ben already have their
+   five (actor `register` in the event log). Three stay in the pool. Bonus
+   line: edit the process afterwards and the header says the change applies
+   to the NEXT instance, never this one.
+3. **Tasks**: filter by region, tick the pool rows, **assign to** -- bulk
+   assignment, two events.
+4. **Delivery platform**: click **Simulate delivery**. No click of ours; in
+   production the platform writes this. It does not write an event -- it
+   writes `_runs/inbox/delivery-2026Q1-Northgate.json`, and the **worker**
+   turns that into an event on its next tick. Within a poll the unit's
+   Review flips from *waiting for Data delivery* to *open*, and the worker
+   has already run `validate.R` for it. (Watch it from a second browser
+   window: same store, same flip.)
+5. **Tasks**: click the status chip -- open → in progress → done. Every
+   click is an event in the store (`actor` = the assignee), not block
+   state. The section header counts up, the diagram shows the same count on
+   the unit boxes; the gate opens when the count is full.
+6. **Rework, per element**: tick a finished unit, write a note, **send
+   back**. Only that row reopens, the gate re-closes, the note hangs on the
+   element (see the event log).
+7. **The worker takes over**: approve the data and `consolidate.R` runs,
+   then `qa_check.R` -- which answers **false** on its first attempt. The
+   branch is in the table, so *Reconcile findings* opens and *Approve
+   publication* goes grey as **skipped**. Nobody wrote an if-statement.
+8. **Rework, on the single track**: mark *Reconcile findings* done. The
+   check is re-armed (`false` → `open`), the worker runs it again, attempt 2
+   answers **true**, and now approval is ready. That is the loop a DAG
+   cannot express -- both attempts are kept, in `_runs/2026Q1/logs/`.
+9. **Approve publication** → `forecast.R` runs and the instance is
+   complete. `_runs/2026Q1/artifacts/` holds every file the scripts wrote.
+
+## Where everything lives
+
+```
+_runs/events.jsonl              the log: the whole truth, append-only
+_runs/inbox/                    messages from outside, one file each
+_runs/inbox/processed/          applied, kept as the receipt
+_runs/inbox/failed/             rejected, with the reason beside them
+_runs/2026Q1/logs/              one file per task per ATTEMPT
+_runs/2026Q1/artifacts/         what the scripts wrote
+_runs/.worker.lock/             held by the running worker
+```
+
+Three moves cover the instance lifecycle:
+
+- **New instance…** (link in the instance header): points the card at the
+  next free id. Start it, and every block on `instance = "latest"` moves to
+  the new one. The old instance stays in the log, addressable by its id
+  (pin a block to `instance = "2026Q1"` to keep watching it).
+- **Reset demo** (link in the delivery strip): archives the log to
+  `_runs/events-<timestamp>.jsonl` -- nothing is deleted, the append-only
+  story stays true -- and clears the inbox.
+- **From the shell**: `rm -rf _runs` is the scorched-earth version.
+
+## Driving it without a browser
+
+`act.R` is what the status chip does, one layer down:
+
+```sh
+Rscript act.R review done ana Northgate      # a person finishes one element
+Rscript act.R approve_data done mira         # the gate
+Rscript act.R reconcile done ben             # re-arms the QA check
+```
+
+and a delivery, the way the platform sends it (any language that can write
+a file can do this):
+
+```r
+blockr.process::write_inbox_message(
+  "_runs", task = "delivery", element = "Riverside",
+  instance = "2026Q1", actor = "delivery-platform",
+  id = "delivery-2026Q1-Riverside"      # resend-safe: the id is the key
+)
+```
+
+## What is deliberately not here
+
+- **Boundary events**: a deadline on a delivery that fires a reminder. It
+  is the one thing the table cannot say today; the spec is
+  `_blockr.design/open/blockr-process/6-boundary-events.md`.
+- **Nachlieferung / late delivery**: same key, one more event --
+  mechanically identical to the rework.
+- **HTTP ingress**: the inbox is a directory here. Putting a plumber
+  endpoint in front of it is twenty lines, see
+  `vignette("external-systems")`.

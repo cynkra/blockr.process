@@ -1,0 +1,10 @@
+/* Status painting for bpmn_widget(status = ...). The class lands on the
+   node's <g>; rect = task body, circle = event, so target descendants. */
+.st-done rect, .st-done circle   { fill: #dcfce7 !important; stroke: #16a34a !important; }
+.st-doing rect, .st-doing circle { fill: #dbeafe !important; stroke: #2563eb !important; }
+.st-blocked rect, .st-blocked circle { fill: #fef3c7 !important; stroke: #d97706 !important; }
+.st-skipped rect, .st-skipped circle { fill: #f3f4f6 !important; stroke: #9ca3af !important; }
+.st-skipped { opacity: 0.55; }
+
+.tidybpmn-overlay { background: none; border: none; color: #6b7280;
+  font-size: 11px; white-space: nowrap; }

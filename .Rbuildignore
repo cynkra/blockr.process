@@ -1,0 +1,10 @@
+^app\.R$
+^tsconfig\.json$
+^LICENSE\.md$
+^LICENSE\.note$
+^dev$
+^srcjs$
+^package\.json$
+^_screenshots$
+^tests/js$
+^_runs$

@@ -1,0 +1,22 @@
+Package: dcdemo
+Title: Data Collection Demo for blockr.process
+Version: 0.1.0
+Authors@R:
+    person(given = "Christoph",
+           family = "Sax",
+           role = c("aut", "cre"),
+           email = "christoph@cynkra.com")
+Description: The demo deployment of blockr.process: a quarterly data
+    collection that repeats per reporting unit, its element lists, and a
+    stand-in for the delivery platform -- a button that writes an inbox
+    message, exactly as the platform would. Everything here is deployment
+    code, the kind of thing every installation writes for itself; the
+    package under test is blockr.process. Demo only; lives in
+    blockr.process/dev/.
+License: GPL (>= 3)
+Encoding: UTF-8
+Imports:
+    blockr.core,
+    blockr.process,
+    shiny
+RoxygenNote: 7.3.3

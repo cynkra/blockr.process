@@ -1,0 +1,9 @@
+{
+  "name": "blockr.process",
+  "private": true,
+  "description": "Test harness for the hand-written blocks in inst/js (no build step: these files ship as they are).",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "test": "node --test \"tests/js/*.test.js\""
+  }
+}

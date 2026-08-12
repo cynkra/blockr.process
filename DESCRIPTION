@@ -1,0 +1,44 @@
+Package: blockr.process
+Title: Process Orchestration Blocks for blockr
+Version: 0.2.0
+Authors@R:
+    person(given = "Christoph",
+           family = "Sax",
+           role = c("aut", "cre"),
+           email = "christoph@cynkra.com")
+Description: The organization as a data frame: process definitions,
+    instances, and tasks live in one wide table that flows through a
+    blockr board, in BPMN vocabulary throughout (process, task, lane,
+    multi-instance, collection, element, assignee). A process block
+    emits the table, task blocks write an append-only event log, a
+    headless worker runs the tasks that are scripts, a file inbox lets
+    other systems move a process forward, and a BPMN block renders the
+    table as a standards-conform process diagram with live status painted
+    on -- the BPMN half (model, interchange XML, auto-layout, widget)
+    lives in the 'bpmn-*.R' files and depends on nothing else here, so it
+    can be lifted back out into a package of its own once the process
+    model stops moving.
+License: GPL (>= 3)
+Encoding: UTF-8
+Imports:
+    blockr.core,
+    blockr.outline (>= 0.0.107),
+    blockr.dplyr (>= 0.2.0),
+    htmltools,
+    htmlwidgets,
+    jsonlite,
+    shiny,
+    stats,
+    tibble,
+    utils,
+    xml2
+Suggests:
+    blockr.dock,
+    knitr,
+    rmarkdown,
+    shinytest2,
+    testthat (>= 3.0.0),
+    withr
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+RoxygenNote: 7.3.3

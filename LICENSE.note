@@ -1,0 +1,36 @@
+Third-party code bundled with blockr.process
+============================================
+
+blockr.process itself is GPL (>= 3); see LICENSE.md.
+
+The BPMN widget ships a pre-built JavaScript bundle so that the package
+works without a node toolchain at install time. The bundle is built from
+`srcjs/` (see `srcjs/package.json` for the build command) and contains
+third-party code under its own, more permissive licenses:
+
+inst/htmlwidgets/lib/bpmn/bpmn-bundle.js
+inst/node/layout-cli.mjs
+
+  bpmn-visualization 0.48.0            Apache License 2.0
+    https://github.com/process-analytics/bpmn-visualization-js
+    Copyright Bonitasoft S.A. and the bpmn-visualization contributors.
+    Bundles mxGraph 4.2.2 (Apache License 2.0, Copyright JGraph Ltd).
+
+  bpmn-auto-layout 1.3.0               MIT License
+    https://github.com/bpmn-io/bpmn-auto-layout
+    Copyright bpmn.io contributors.
+    Pulls in bpmn-moddle, moddle, moddle-xml, min-dash and saxen, all MIT
+    and all Copyright bpmn.io contributors.
+
+  Further transitive dependencies of the above (fast-xml-parser,
+  fast-xml-builder, es-toolkit, saxen, strnum, xml-naming, anynum,
+  path-expression-matcher, @nodable/entities) are MIT.
+
+The full license texts travel with the sources in
+`srcjs/node_modules/<package>/LICENSE` after `npm install`, and are
+available at the URLs above. `srcjs/node_modules/` is not part of this
+repository or of the built package.
+
+None of the bundled code is GPL, and none of it is modified: it is the
+published output of the projects above, concatenated and minified by
+esbuild.

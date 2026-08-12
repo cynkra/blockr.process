@@ -1,0 +1,194 @@
+/* The start-instance card: the moment before an instance exists, and the
+   instance header after. One shape for both — head line, then a meta line —
+   so clicking the button changes what the card SAYS, not where things are.
+
+   Design system: blockr.docs/design-system. Tokens with literal fallbacks,
+   42px controls, 8px radius, flex-wrap instead of media queries. The Shiny
+   inputs keep their Bootstrap wrappers (an R-driven block has no choice);
+   everything visible about them is overridden here. */
+
+.sib-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px 0 4px;
+}
+
+/* --- head: what this card is, and which definition it is about --- */
+
+.sib-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.sib-title {
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  font-weight: 600;
+  color: var(--blockr-color-text-primary, #111827);
+}
+
+.sib-version {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: var(--blockr-font-size-xs, 0.75rem);
+  color: var(--blockr-color-text-muted, #6b7280);
+  background: var(--blockr-color-bg-input, #f9fafb);
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+/* pushes the trailing action to the right edge of the head line */
+.sib-spring { flex: 1 1 auto; }
+
+.sib-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--blockr-font-size-sm, 0.8125rem);
+  color: var(--blockr-color-primary, #2563eb);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.sib-link:hover { color: var(--blockr-color-primary-hover, #1d4ed8); }
+
+/* --- the fields: equal share above a soft minimum, then wrap --- */
+
+.sib-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 6px 12px;
+}
+
+.sib-field {
+  flex: 1 1 160px;
+  min-width: 0;          /* mandatory: lets an overflowing select shrink */
+  display: flex;
+  flex-direction: column;
+}
+
+/* A year is four characters, so the id field gives its room away. The
+   basis above is set so that a narrow panel wraps the BUTTON to its own
+   line rather than truncating the collection name: the name is the choice
+   being made here, and half of it is not a choice. */
+.sib-field--id { flex: 0 1 110px; }
+.sib-field--go { flex: 0 0 auto; }
+
+/* Shiny wraps every input in .form-group with a bottom margin and its own
+   label; the field wrapper owns the spacing here, so both are neutralised. */
+.sib-field .form-group,
+.sib-field .shiny-input-container {
+  margin: 0;
+  width: 100% !important;
+}
+
+.sib-field .control-label,
+.sib-label {
+  font-size: var(--blockr-font-size-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--blockr-color-text-muted, #6b7280);
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+
+.sib-field .form-control,
+.sib-field .form-select,
+.sib-field select {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  color: var(--blockr-color-text-primary, #111827);
+  background-color: var(--blockr-color-bg-input, #f9fafb);
+  border: 1px solid var(--blockr-color-border, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: none;
+  /* a long list name shortens rather than wrapping the control to two lines */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+/* The native select loses its OS chrome and gets the chevron the rest of the
+   system draws (blockr-select's arrow, grey-400). */
+.sib-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
+
+.sib-field .form-control:focus,
+.sib-field .form-select:focus,
+.sib-field select:focus {
+  background-color: #fff;
+  border-color: var(--blockr-color-primary, #2563eb);
+  box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
+  outline: none;
+}
+
+/* --- the action --- */
+
+.sib-go {
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--blockr-color-primary, #2563eb);
+  border-radius: 8px;
+  background: var(--blockr-color-primary, #2563eb);
+  color: #fff;
+  font: inherit;
+  font-size: var(--blockr-font-size-base, 0.875rem);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.sib-go:hover:not([disabled]) {
+  background: var(--blockr-color-primary-hover, #1d4ed8);
+  border-color: var(--blockr-color-primary-hover, #1d4ed8);
+}
+
+.sib-go:focus-visible {
+  outline: none;
+  box-shadow: var(--blockr-focus-ring, 0 0 0 3px rgba(37, 99, 235, 0.12));
+}
+
+/* Nothing to start from: the button says so by being unavailable, and the
+   meta line below says why. */
+.sib-go[disabled] {
+  background: var(--blockr-color-bg-hover, #f3f4f6);
+  border-color: var(--blockr-color-border, #e5e7eb);
+  color: var(--blockr-color-text-subtle, #9ca3af);
+  cursor: not-allowed;
+}
+
+/* --- meta: what this will create, or what it did create --- */
+
+.sib-meta {
+  font-size: var(--blockr-font-size-sm, 0.8125rem);
+  color: var(--blockr-color-text-meta, #6b7280);
+}
+
+.sib-meta b {
+  font-weight: 600;
+  color: var(--blockr-color-text-secondary, #374151);
+}
+
+.sib-drift {
+  font-size: var(--blockr-font-size-sm, 0.8125rem);
+  color: var(--blockr-color-warning-text, #b45309);
+  background: var(--blockr-color-warning-bg, #fffbeb);
+  border: 1px solid var(--blockr-color-warning, #f59e0b);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
