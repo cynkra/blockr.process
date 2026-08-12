@@ -1,0 +1,97 @@
+# Multi-instance groups of a wide process table
+
+The part of a process that repeats is a BPMN \*\*multi-instance
+sub-process\*\*, and under the one-table convention that sub-process is
+a row like any other: a row with a non-empty \`collection\` is the
+group, and the rows whose \`parent\` names it are its members. Each
+member runs once per element of the collection, and a task outside the
+group that depends on it waits for the whole sub-process to complete
+(the parallel join, see \`complete_when\` for the quorum).
+
+## Usage
+
+``` r
+process_groups(df)
+
+process_scopes(df)
+
+process_collection(df)
+
+process_complete_when(df)
+
+process_sequential(df)
+
+process_body(df)
+```
+
+## Arguments
+
+- df:
+
+  A wide process table.
+
+## Value
+
+\`process_groups()\`: a data frame with \`group\`, \`name\`,
+\`collection\`, \`parent\` (the enclosing group, \`""\` at top level),
+\`complete_when\` and \`sequential\`, one row per group.
+
+\`process_scopes()\`: a named list over every row of \`df\` – the group
+ids enclosing that row, innermost first, \`character(0)\` at top level.
+Errors on a \`parent\` cycle.
+
+\`process_collection()\`: a named character vector over every row of
+\`df\` – the collection that row repeats over, \`""\` for single tasks
+and for the group rows themselves. Nested groups resolve to the
+innermost.
+
+\`process_complete_when()\`: a named character vector over every row –
+the quorum spec of the group that row belongs to (\`""\` = all, and
+\`""\` for single tasks). This is what a task waiting on the group has
+to clear; see \[process_quorum()\] for the grammar.
+
+\`process_sequential()\`: a named logical vector over every row –
+whether the group that row belongs to runs its elements one at a time
+(BPMN \`isSequential\`). \`FALSE\` for single tasks.
+
+\`process_body()\`: \`df\` without its group rows, with every container
+edge lowered onto the members (see details).
+
+## Details
+
+The value of \`collection\` names the \*\*collection type\*\* the
+sub-process iterates (\`unit\`), not the concrete list: the definition
+is list-agnostic and the elements are bound when an instance starts. In
+Camunda's vocabulary the column therefore holds \`inputElement\`, while
+\`inputCollection\` is instance data.
+
+\`process_groups()\` lists the groups, \`process_collection()\` answers
+the question every consumer actually asks – what does this task repeat
+over – and \`process_body()\` drops the containers, leaving the rows
+that are real work.
+
+Groups nest: a group whose \`parent\` names another group repeats inside
+it. \`process_scopes()\` gives the full enclosing chain,
+\`process_collection()\` the innermost collection.
+
+Tables written before groups existed marked every repeated task with a
+\`per\` column instead; \`process_collection()\` falls back to it when
+there is no \`collection\` column, so old definitions (and the process
+JSON stamped into a running instance) keep folding.
+
+BPMN forbids a sequence flow that crosses a sub-process boundary: the
+container carries the incoming and outgoing flows, its members are wired
+only among themselves. \`process_body()\` is where that is turned back
+into a flat table, by \*lowering\* each container's edges onto its
+members, innermost group first:
+
+\- \`X depends_on G\` becomes a dependency on every \*\*leaf\*\* member
+of \`G\` (the members nothing else in \`G\` waits for), which is the
+parallel join where the sub-process closes. - \`G depends_on Y\` becomes
+a dependency of every \*\*root\*\* member of \`G\` (the members that
+wait for nothing else in \`G\`) on \`Y\`, which is the fan-out where it
+opens.
+
+A dependency that names a \*member\* from outside the group is left
+alone. It lowers to the same edge, which is why definitions written
+before containers were addressable keep working unchanged.

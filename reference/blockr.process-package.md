@@ -1,0 +1,20 @@
+# blockr.process: Process Orchestration Blocks for blockr
+
+The organization as a data frame: process definitions, instances, and
+tasks live in one wide table that flows through a blockr board, in BPMN
+vocabulary throughout (process, task, lane, multi-instance, collection,
+element, assignee). A process block emits the table, task blocks write
+an append-only event log, a headless worker runs the tasks that are
+scripts, a file inbox lets other systems move a process forward, and a
+BPMN block renders the table as a standards-conform process diagram with
+live status painted on. The package is two layers in one namespace: the
+engine (table semantics, event store, worker, inbox) is pure R with no
+UI dependency, the blocks sit on top, and a test enforces the direction
+– see 'dev/architecture.md'. The BPMN half (model, interchange XML,
+auto-layout, widget) lives in the 'bpmn-\*.R' files and depends on
+nothing else here, so either layer can be lifted out into a package of
+its own once the process model stops moving.
+
+## Author
+
+**Maintainer**: Christoph Sax <christoph@cynkra.com>
