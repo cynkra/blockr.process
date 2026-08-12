@@ -21,4 +21,25 @@
     ),
     package = pkgname
   )
+
+  # The demo's two blocks (R/demo-blocks.R). They are registered because the
+  # gallery board must be able to SAVE and RESTORE, which goes through the
+  # registry -- and named "(demo)" because they are deployment code that
+  # happens to ship here, not part of the process model.
+  blockr.core::register_blocks(
+    ctor = c("new_demo_start_block", "new_demo_delivery_block"),
+    name = c("Start instance (demo)", "Delivery platform (demo)"),
+    description = c(
+      paste(
+        "Start an instance from the incoming definition, with the demo's",
+        "element lists baked in"
+      ),
+      paste(
+        "The upload platform as a button: writes one inbox message per",
+        "click, which the worker turns into an event"
+      )
+    ),
+    category = c("transform", "input"),
+    package = pkgname
+  )
 }

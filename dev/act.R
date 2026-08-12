@@ -2,9 +2,9 @@
 # tasks block does, one layer down. Useful to drive the demo without a
 # browser, and the honest answer to "can I script this?".
 #
-#   Rscript act.R review done ana Northgate
-#   Rscript act.R approve_data done mira
-#   Rscript act.R reconcile done ben
+#   Rscript blockr.process/dev/act.R review done ana Northgate
+#   Rscript blockr.process/dev/act.R approve_data done mira
+#   Rscript blockr.process/dev/act.R reconcile done ben
 #
 #   arguments: <task> [<status>] [<actor>] [<element>]
 
@@ -13,13 +13,13 @@ here <- local({
   if (length(a)) dirname(normalizePath(sub("^--file=", "", a[1]))) else getwd()
 })
 
-pkgload::load_all(file.path(here, "../.."), quiet = TRUE)  # blockr.process
+pkgload::load_all(file.path(here, ".."), quiet = TRUE)  # blockr.process
 
 args <- commandArgs(TRUE)
 if (!length(args)) {
   stop("usage: Rscript act.R <task> [<status>] [<actor>] [<element>]")
 }
-store <- Sys.getenv("DC_STORE", unset = file.path(here, "_runs"))
+store <- Sys.getenv("BLOCKR_PROCESS_STORE", unset = "/tmp/blockr-process-demo")
 
 blockr.process::process_act(
   task = args[1],

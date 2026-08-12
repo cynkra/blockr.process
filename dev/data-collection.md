@@ -6,13 +6,22 @@ a process that repeats per unit, people picking tasks up in a browser,
 scripts actually running in a worker process, and an outside system moving
 the process forward without knowing that blockr exists.
 
+The board lives in one file, `inst/examples/data-collection.R`, so an
+installed user runs it with
+
+```r
+source(system.file("examples/data-collection.R", package = "blockr.process"))
+```
+
+and it is also the exact file the blockr.cloud gallery deploys.
+
 ```
   delivery platform ─┐  writes             ┌─ ingests
                      ▼                     ▼
-              _runs/inbox/*.json ──► worker (worker.R, headless)
-                                            │  runs jobs/*.R
-  tasks block ──────────────► _runs/events.jsonl ◄── act.R (a person, from the shell)
-  (chips, assign, send back)     append-only
+             <store>/inbox/*.json ──► worker (headless, dev/worker.R)
+                                            │  runs inst/examples/jobs/*.R
+  tasks block ──────────────► <store>/events.jsonl ◄── dev/act.R (a person,
+  (chips, assign, send back)     append-only                     from the shell)
                                        │
                                        ▼
                         the board folds the log and redraws
@@ -21,6 +30,9 @@ the process forward without knowing that blockr exists.
 Three writers, one file, no server between them. The board never starts a
 script and holds no instance state, so closing the browser does not stop
 production, and two people watching see the same thing.
+
+`<store>` is `/tmp/blockr-process-demo` unless `BLOCKR_PROCESS_STORE` says
+otherwise.
 
 ## The process
 
@@ -47,17 +59,23 @@ table.
 
 ## Run it
 
-```sh
-cd /workspace/blockr.process/dev/data-collection-demo
-rm -rf _runs                       # fresh store (the app offers to start)
+From an R session at the workspace root:
 
-# 1. the board (blockr_port() = first free forwarded port, 3838-3847)
-Rscript -e 'shiny::runApp(".", port = blockr_port(), host = "0.0.0.0")'
-
-# 2. the worker, in a second terminal. Start it AFTER the instance is
-#    opened in the app -- it reads the definition out of the instance.
-Rscript worker.R
+```r
+source("blockr.process/dev/data-collection.R")   # dev_local = TRUE, port 3838
 ```
+
+The app starts its own worker (`demo_worker_start()`), which is the hosting
+convenience the gallery needs. To watch a worker's output instead, point the
+app somewhere without one and run it yourself in a second terminal:
+
+```sh
+BLOCKR_PROCESS_WORKER=0 Rscript -e 'source("blockr.process/dev/data-collection.R")'
+Rscript blockr.process/dev/worker.R          # reads the definition out of the store
+```
+
+For a clean board (back to the "start an instance" card), press **Reset
+demo** in the app, or `rm -rf /tmp/blockr-process-demo`.
 
 ## The click script (what to show, in order)
 
@@ -81,7 +99,7 @@ Rscript worker.R
    assignment, two events.
 4. **Delivery platform**: click **Simulate delivery**. No click of ours; in
    production the platform writes this. It does not write an event -- it
-   writes `_runs/inbox/delivery-2026Q1-Northgate.json`, and the **worker**
+   writes `<store>/inbox/delivery-2026Q1-Northgate.json`, and the **worker**
    turns that into an event on its next tick. Within a poll the unit's
    Review flips from *waiting for Data delivery* to *open*, and the worker
    has already run `validate.R` for it. (Watch it from a second browser
@@ -100,20 +118,20 @@ Rscript worker.R
 8. **Rework, on the single track**: mark *Reconcile findings* done. The
    check is re-armed (`false` → `open`), the worker runs it again, attempt 2
    answers **true**, and now approval is ready. That is the loop a DAG
-   cannot express -- both attempts are kept, in `_runs/2026Q1/logs/`.
+   cannot express -- both attempts are kept, in `<store>/2026Q1/logs/`.
 9. **Approve publication** → `forecast.R` runs and the instance is
-   complete. `_runs/2026Q1/artifacts/` holds every file the scripts wrote.
+   complete. `<store>/2026Q1/artifacts/` holds every file the scripts wrote.
 
 ## Where everything lives
 
 ```
-_runs/events.jsonl              the log: the whole truth, append-only
-_runs/inbox/                    messages from outside, one file each
-_runs/inbox/processed/          applied, kept as the receipt
-_runs/inbox/failed/             rejected, with the reason beside them
-_runs/2026Q1/logs/              one file per task per ATTEMPT
-_runs/2026Q1/artifacts/         what the scripts wrote
-_runs/.worker.lock/             held by the running worker
+<store>/events.jsonl              the log: the whole truth, append-only
+<store>/inbox/                    messages from outside, one file each
+<store>/inbox/processed/          applied, kept as the receipt
+<store>/inbox/failed/             rejected, with the reason beside them
+<store>/2026Q1/logs/              one file per task per ATTEMPT
+<store>/2026Q1/artifacts/         what the scripts wrote
+<store>/.worker.lock/             held by the running worker
 ```
 
 Three moves cover the instance lifecycle:
@@ -123,18 +141,19 @@ Three moves cover the instance lifecycle:
   the new one. The old instance stays in the log, addressable by its id
   (pin a block to `instance = "2026Q1"` to keep watching it).
 - **Reset demo** (link in the delivery strip): archives the log to
-  `_runs/events-<timestamp>.jsonl` -- nothing is deleted, the append-only
+  `<store>/events-<timestamp>.jsonl` -- nothing is deleted, the append-only
   story stays true -- and clears the inbox.
-- **From the shell**: `rm -rf _runs` is the scorched-earth version.
+- **From the shell**: `rm -rf /tmp/blockr-process-demo` is the
+  scorched-earth version.
 
 ## Driving it without a browser
 
-`act.R` is what the status chip does, one layer down:
+`dev/act.R` is what the status chip does, one layer down:
 
 ```sh
-Rscript act.R review done ana Northgate      # a person finishes one element
-Rscript act.R approve_data done mira         # the gate
-Rscript act.R reconcile done ben             # re-arms the QA check
+Rscript blockr.process/dev/act.R review done ana Northgate   # one element
+Rscript blockr.process/dev/act.R approve_data done mira      # the gate
+Rscript blockr.process/dev/act.R reconcile done ben          # re-arms QA
 ```
 
 and a delivery, the way the platform sends it (any language that can write
@@ -142,7 +161,7 @@ a file can do this):
 
 ```r
 blockr.process::write_inbox_message(
-  "_runs", task = "delivery", element = "Riverside",
+  "/tmp/blockr-process-demo", task = "delivery", element = "Riverside",
   instance = "2026Q1", actor = "delivery-platform",
   id = "delivery-2026Q1-Riverside"      # resend-safe: the id is the key
 )
@@ -153,8 +172,8 @@ blockr.process::write_inbox_message(
 - **Boundary events**: a deadline on a delivery that fires a reminder. It
   is the one thing the table cannot say today; the spec is
   `_blockr.design/open/blockr-process/6-boundary-events.md`.
-- **Nachlieferung / late delivery**: same key, one more event --
-  mechanically identical to the rework.
+- **Late delivery**: same key, one more event -- mechanically identical to
+  the rework.
 - **HTTP ingress**: the inbox is a directory here. Putting a plumber
   endpoint in front of it is twenty lines, see
   `vignette("external-systems")`.

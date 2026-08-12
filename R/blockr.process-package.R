@@ -2,7 +2,7 @@
 #' @importFrom blockr.core bbquote new_data_block new_plot_block
 #'   new_transform_block
 #' @importFrom htmltools htmlDependency
-#' @importFrom shiny NS div span moduleServer observeEvent reactive
+#' @importFrom shiny HTML NS div span moduleServer observeEvent reactive
 #'   reactiveVal tagList invalidateLater isolate observe renderText
 #'   textOutput
 "_PACKAGE"

@@ -34,6 +34,7 @@ Imports:
     xml2
 Suggests:
     blockr.dock,
+    callr,
     knitr,
     rmarkdown,
     shinytest2,
