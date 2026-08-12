@@ -45,6 +45,9 @@ Suggests:
     shinytest2,
     testthat (>= 3.0.0),
     withr
+Remotes:
+    BristolMyersSquibb/blockr.dplyr,
+    cynkra/blockr.outline
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 RoxygenNote: 7.3.3
