@@ -7,19 +7,30 @@
 #' of the model.
 #'
 #' @param nodes Data frame with columns `id`, `name`, `type` and optionally
-#'   `lane`, `multi` (logical: draw the activity as multi-instance, the
-#'   `|||` marker) and `multi_seq` (logical: that multi-instance runs its
-#'   elements one at a time, BPMN `isSequential`, drawn as the `≡` marker).
+#'   `lane`, `script` (what a script task runs, kept for round-tripping
+#'   through [bpmn_to_table()]), `multi` (logical: draw the activity as
+#'   multi-instance, the `|||` marker) and `multi_seq` (logical: that
+#'   multi-instance runs its elements one at a time, BPMN `isSequential`,
+#'   drawn as the `≡` marker).
 #'   Recognized types (aliases in parentheses): `startEvent`
 #'   (`start`), `endEvent` (`end`), `task`, `userTask` (`user`),
 #'   `serviceTask` (`service`), `scriptTask` (`script`), `manualTask`
-#'   (`manual`), `exclusiveGateway` (`gateway`, `xor`), `parallelGateway`
-#'   (`parallel`, `and`), `complexGateway` (`complex`, the quorum join).
+#'   (`manual`), `sendTask` (`send`), `receiveTask` (`receive`, a task an
+#'   incoming message completes), `exclusiveGateway` (`gateway`, `xor`),
+#'   `parallelGateway` (`parallel`, `and`), `inclusiveGateway`
+#'   (`inclusive`, `or`), `complexGateway` (`complex`, the quorum join).
 #' @param flows Data frame with columns `from`, `to` and optionally `name`
 #'   (the label on the arrow, e.g. a gateway condition).
 #' @param name Process name.
+#' @param messages Optional data frame with columns `from` and `to`: message
+#'   flows between the process and the outside world. Exactly one side of
+#'   each row must be a node id; the other side is the label of an external
+#'   pool (drawn collapsed), e.g.
+#'   `data.frame(from = "Reporting unit", to = "deliver")` for an incoming
+#'   delivery. An optional `name` column labels the flow.
 #'
-#' @return A `bpmn` object: a list with `nodes`, `flows` and `name`.
+#' @return A `bpmn` object: a list with `nodes`, `flows`, `name` and
+#'   `messages` (`NULL` when there are none).
 #'
 #' @examples
 #' m <- bpmn(
@@ -33,7 +44,7 @@
 #' m
 #'
 #' @export
-bpmn <- function(nodes, flows, name = "Process") {
+bpmn <- function(nodes, flows, name = "Process", messages = NULL) {
   stopifnot(is.data.frame(nodes), is.data.frame(flows))
 
   req_nodes <- c("id", "name", "type")
@@ -55,6 +66,9 @@ bpmn <- function(nodes, flows, name = "Process") {
   nodes$type <- canonical_type(as.character(nodes$type))
   if (!"lane" %in% names(nodes)) nodes$lane <- NA_character_
   nodes$lane <- as.character(nodes$lane)
+  if (!"script" %in% names(nodes)) nodes$script <- NA_character_
+  nodes$script <- as.character(nodes$script)
+  nodes$script[!is.na(nodes$script) & !nzchar(nodes$script)] <- NA_character_
   # a multi-instance activity: one BPMN box, run once per element of a
   # collection, drawn with the ||| marker
   if (!"multi" %in% names(nodes)) nodes$multi <- FALSE
@@ -101,8 +115,41 @@ bpmn <- function(nodes, flows, name = "Process") {
     stop("A BPMN process needs at least one end event (type = \"end\").")
   }
 
+  # -- message flows ----------------------------------------------------------
+  if (!is.null(messages)) {
+    stopifnot(is.data.frame(messages))
+    missing_req <- setdiff(c("from", "to"), names(messages))
+    if (length(missing_req)) {
+      stop("`messages` is missing columns: ", paste(missing_req, collapse = ", "))
+    }
+    messages <- tibble::as_tibble(messages)
+    messages$from <- as.character(messages$from)
+    messages$to <- as.character(messages$to)
+    if (!"name" %in% names(messages)) messages$name <- NA_character_
+    messages$name <- as.character(messages$name)
+
+    from_in <- messages$from %in% nodes$id
+    to_in <- messages$to %in% nodes$id
+    bad <- from_in == to_in # both a node (internal) or neither (untethered)
+    if (any(bad)) {
+      stop(
+        "Each message flow needs exactly one node-id endpoint; the other ",
+        "side is the label of an external pool. Offending row(s): ",
+        paste(which(bad), collapse = ", ")
+      )
+    }
+    pool <- ifelse(from_in, messages$to, messages$from)
+    if (any(is.na(pool) | !nzchar(pool))) {
+      stop("External pool labels in `messages` must be non-empty.")
+    }
+    if (!nrow(messages)) messages <- NULL
+  }
+
   structure(
-    list(nodes = nodes, flows = flows, name = as.character(name)),
+    list(
+      nodes = nodes, flows = flows, name = as.character(name),
+      messages = messages
+    ),
     class = "bpmn"
   )
 }
@@ -118,10 +165,14 @@ canonical_type <- function(x) {
     service = "serviceTask", servicetask = "serviceTask",
     script = "scriptTask", scripttask = "scriptTask",
     manual = "manualTask", manualtask = "manualTask",
+    send = "sendTask", sendtask = "sendTask",
+    receive = "receiveTask", receivetask = "receiveTask",
     gateway = "exclusiveGateway", xor = "exclusiveGateway",
     exclusivegateway = "exclusiveGateway",
     parallel = "parallelGateway", and = "parallelGateway",
     parallelgateway = "parallelGateway",
+    inclusive = "inclusiveGateway", or = "inclusiveGateway",
+    inclusivegateway = "inclusiveGateway",
     complex = "complexGateway", complexgateway = "complexGateway"
   )
   out <- unname(map[tolower(x)])
@@ -130,7 +181,7 @@ canonical_type <- function(x) {
     stop(
       "Unknown node type(s): ", paste(unique(x[bad]), collapse = ", "),
       "\nRecognized: start, end, task, user, service, script, manual, ",
-      "gateway (xor), parallel (and), complex."
+      "send, receive, gateway (xor), parallel (and), inclusive (or), complex."
     )
   }
   out
@@ -146,5 +197,9 @@ print.bpmn <- function(x, ...) {
   print(x$nodes)
   cat("\nFlows:\n")
   print(x$flows)
+  if (!is.null(x$messages)) {
+    cat("\nMessage flows:\n")
+    print(x$messages)
+  }
   invisible(x)
 }

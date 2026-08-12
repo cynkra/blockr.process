@@ -7,6 +7,7 @@
     "build": "esbuild index.js --bundle --format=iife --global-name=BlockrBpmn --minify --outfile=../inst/htmlwidgets/lib/bpmn/bpmn-bundle.js && esbuild layout-cli.js --bundle --format=esm --platform=node --outfile=../inst/node/layout-cli.mjs"
   },
   "dependencies": {
+    "@xmldom/xmldom": "^0.9.11",
     "bpmn-auto-layout": "^1.3.0",
     "bpmn-visualization": "^0.48.0"
   },

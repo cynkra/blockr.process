@@ -17,7 +17,8 @@
 
 engine_files <- c(
   "process-table.R", "multi.R", "event-store.R", "instance.R",
-  "inbox.R", "worker.R", "bpmn-model.R", "bpmn-xml.R", "bpmn-example.R"
+  "inbox.R", "worker.R", "bpmn-model.R", "bpmn-xml.R", "bpmn-read.R",
+  "bpmn-example.R"
 )
 
 ui_markers <- c(

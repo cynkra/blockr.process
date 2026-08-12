@@ -5,9 +5,11 @@
 #' `status`) describing a run. `as_bpmn()` reads only the skeleton columns.
 #'
 #' Conventions:
-#' - `role == "system"` becomes a script task (when `script` is set) or a
-#'   service task; any other non-empty role becomes a user task; empty role
-#'   a plain task.
+#' - `role == "system"` becomes a script task when `script` is set, and a
+#'   **receive task** when it is not: a system task without a script is
+#'   completed by an inbox message (see `vignette("external-systems")`), and
+#'   the envelope marker says so. Any other non-empty role becomes a user
+#'   task; empty role a plain task.
 #' - A row with a non-empty `collection` is a **multi-instance sub-process**
 #'   (see [process_groups()]), not work of its own: it is dropped from the
 #'   diagram and the rows whose `parent` names it are marked multi-instance
@@ -33,11 +35,16 @@
 #'   `depends_on`, `script`, `parent`, `collection`, `join`, `complete_when`
 #'   and `sequential` are used when present.
 #' @param name Process name.
+#' @param external Optional label of the external pool the inbox messages
+#'   come from (e.g. `"Reporting unit"`). When set, every receive task
+#'   (`role == "system"` without a script) gets a message flow from a
+#'   collapsed pool of that name, so the diagram shows where the process
+#'   touches the outside world. `NULL` (the default) draws no pool.
 #'
 #' @return A [bpmn()] model.
 #'
 #' @export
-as_bpmn <- function(df, name = "Process") {
+as_bpmn <- function(df, name = "Process", external = NULL) {
   stopifnot(is.data.frame(df), all(c("task", "name") %in% names(df)))
 
   # the sub-process rows are containers, so the diagram shows their members
@@ -62,7 +69,9 @@ as_bpmn <- function(df, name = "Process") {
   node_type <- function(i) {
     r <- role[i]
     if (!is.na(r) && r == "system") {
-      if (!is.na(script[i]) && nzchar(script[i])) "script" else "service"
+      # no script = nothing for the worker to run: only an inbox message
+      # (or a manual act) completes it, which is BPMN's receive task
+      if (!is.na(script[i]) && nzchar(script[i])) "script" else "receive"
     } else if (!is.na(r) && nzchar(r)) {
       "user"
     } else {
@@ -75,6 +84,7 @@ as_bpmn <- function(df, name = "Process") {
     name = as.character(df$name),
     type = vapply(seq_along(task), node_type, character(1)),
     lane = role,
+    script = script,
     multi = unname(multi),
     multi_seq = unname(seq_of),
     stringsAsFactors = FALSE
@@ -100,7 +110,7 @@ as_bpmn <- function(df, name = "Process") {
         id = join,
         name = join_label(join_spec[i], need, nrow(gated)),
         type = join_type(need, nrow(gated)),
-        lane = NA, multi = FALSE, multi_seq = FALSE,
+        lane = NA, script = NA, multi = FALSE, multi_seq = FALSE,
         stringsAsFactors = FALSE
       ))
       flows <- rbind(
@@ -130,10 +140,12 @@ as_bpmn <- function(df, name = "Process") {
 
   nodes <- rbind(
     data.frame(id = "_start", name = "Start", type = "start", lane = NA,
-               multi = FALSE, multi_seq = FALSE, stringsAsFactors = FALSE),
+               script = NA, multi = FALSE, multi_seq = FALSE,
+               stringsAsFactors = FALSE),
     nodes,
     data.frame(id = "_end", name = "End", type = "end", lane = NA,
-               multi = FALSE, multi_seq = FALSE, stringsAsFactors = FALSE)
+               script = NA, multi = FALSE, multi_seq = FALSE,
+               stringsAsFactors = FALSE)
   )
   flows <- rbind(
     data.frame(from = "_start", to = unname(id[roots]), name = NA,
@@ -143,7 +155,19 @@ as_bpmn <- function(df, name = "Process") {
                stringsAsFactors = FALSE)
   )
 
-  bpmn(nodes, flows, name = name)
+  messages <- NULL
+  if (!is.null(external)) {
+    stopifnot(is.character(external), length(external) == 1L, nzchar(external))
+    rec <- nodes$id[nodes$type == "receive"]
+    if (length(rec)) {
+      messages <- data.frame(
+        from = external, to = rec,
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+
+  bpmn(nodes, flows, name = name, messages = messages)
 }
 
 #' The gateway a fan-in synthesizes, from its quorum

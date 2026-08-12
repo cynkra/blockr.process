@@ -88,12 +88,14 @@ reference:
 
 - title: BPMN
   desc: >
-    The diagram half -- tidy model, interchange XML, auto-layout, widget.
-    Pure R plus a bundled JS renderer; depends on nothing else in the
-    package.
+    The diagram half -- tidy model, interchange XML in both directions,
+    auto-layout with lanes and pools, widget. Pure R plus a bundled JS
+    renderer; depends on nothing else in the package.
   contents:
   - bpmn
   - as_bpmn
+  - read_bpmn
+  - bpmn_to_table
   - bpmn_xml
   - write_bpmn
   - layout_bpmn

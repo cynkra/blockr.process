@@ -1,6 +1,6 @@
 dependencies:
   - name: blockr-bpmn-bundle
-    version: 0.0.1
+    version: 0.0.2
     src: htmlwidgets/lib/bpmn
     script: bpmn-bundle.js
     stylesheet: bpmn-status.css

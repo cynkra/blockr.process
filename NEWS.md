@@ -1,5 +1,33 @@
 # blockr.process (development version)
 
+* **BPMN files can now be read, not only written.** `read_bpmn()` parses a
+  BPMN 2.0 interchange document -- from this package, Camunda Modeler,
+  bpmn.io -- into the tidy model, whatever the namespace prefixes, and
+  `bpmn_to_table()` inverts the compile: gateways dissolve back into the
+  `depends_on` grammar (branch labels become outcome qualifiers, converging
+  gateways become `join`), lanes become roles, multi-instance runs regroup
+  into container rows. Draw a process in a modeler, drop the file in, get a
+  table blockr.process can run. `bpmn_xml()` writes what a script task runs
+  into the standard `<bpmn:script>` element, so a table survives the round
+  trip with its worker wiring intact.
+
+* **Lanes render.** Roles have always been lanes in the model, but the
+  bundled auto-layouter drops every edge as soon as a `laneSet` appears, so
+  they were kept out of the diagram. The layout paths (widget and
+  `layout_bpmn()`) now share a post-layout step that strips the lanes before
+  laying out and re-imposes them afterwards: nodes band into their lanes,
+  every edge is re-routed orthogonally, and the process gets its pool. Who
+  does what is now visible in every diagram.
+
+* **A `system` task without a script draws as a receive task** (the envelope
+  marker): nothing for the worker to run means only an inbox message or a
+  manual act completes it, and the diagram now says so. Passing
+  `as_bpmn(external = "Reporting unit")` adds a collapsed pool of that name
+  with a message flow into each receive task -- the integration story of
+  `vignette("external-systems")`, drawn. `bpmn()` gained a `messages`
+  argument for the general case, plus `sendTask` and `inclusiveGateway`
+  vocabulary.
+
 * **The tasks block no longer has a "send back" button** (and the bulk note
   field that only served it is gone with it). It was the one action-specific
   gesture in an otherwise generic block. Sending work back is a decision, and

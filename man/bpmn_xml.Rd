@@ -4,16 +4,18 @@
 \alias{bpmn_xml}
 \title{Generate BPMN 2.0 XML from a tidy BPMN model}
 \usage{
-bpmn_xml(x, include_lanes = FALSE)
+bpmn_xml(x, include_lanes = TRUE)
 }
 \arguments{
 \item{x}{A [bpmn()] model.}
 
 \item{include_lanes}{Emit a `laneSet` from the `lane` column? Default
-`FALSE`: the bundled auto-layout library (bpmn-auto-layout 1.3.0) drops
-all sequence-flow edges when a `laneSet` is present, so lanes are
-currently kept out of the layout/render path. The `lane` column stays
-part of the tidy model.}
+`TRUE`. Nodes without a lane (synthesized gateways, start/end events)
+inherit the lane of a neighbour, majority of predecessors first. The
+bundled auto-layout library (bpmn-auto-layout 1.3.0) drops all
+sequence-flow edges when a `laneSet` is present, so the layout paths
+([layout_bpmn()] and the widget) strip the lanes before laying out and
+band the result back into lanes afterwards.}
 }
 \value{
 An `xml2::xml_document`.

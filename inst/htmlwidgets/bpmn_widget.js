@@ -11,10 +11,10 @@ HTMLWidgets.widget({
     return {
       renderValue: function (x) {
         var mySeq = ++seq;
-        BlockrBpmn.layoutProcess(x.xml)
-          .then(function (res) {
+        // finishLayout = auto-layout + lane banding + pools + message flows
+        BlockrBpmn.finishLayout(x.xml)
+          .then(function (xml) {
             if (mySeq !== seq) return; // superseded by a newer render
-            var xml = typeof res === "string" ? res : res.xml;
             el.innerHTML = "";
             viz = new BlockrBpmn.BpmnVisualization({
               container: el,

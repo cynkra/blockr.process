@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand-written in the style Camunda Modeler exports: bpmn2: prefixes,
+     a collaboration with a pool, lanes, diagram interchange included.
+     read_bpmn() must ignore the DI and survive the prefixes. -->
+<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn2:collaboration id="Collaboration_0">
+    <bpmn2:participant id="Participant_0" name="Review board" processRef="Process_0" />
+    <bpmn2:participant id="Participant_ext" name="Applicant" />
+    <bpmn2:messageFlow id="MessageFlow_0" sourceRef="Participant_ext" targetRef="Activity_receive" />
+  </bpmn2:collaboration>
+  <bpmn2:process id="Process_0" name="Application review" isExecutable="false">
+    <bpmn2:laneSet id="LaneSet_0">
+      <bpmn2:lane id="Lane_clerk" name="Clerk">
+        <bpmn2:flowNodeRef>StartEvent_1</bpmn2:flowNodeRef>
+        <bpmn2:flowNodeRef>Activity_receive</bpmn2:flowNodeRef>
+        <bpmn2:flowNodeRef>Activity_score</bpmn2:flowNodeRef>
+      </bpmn2:lane>
+      <bpmn2:lane id="Lane_board" name="Board">
+        <bpmn2:flowNodeRef>Gateway_ok</bpmn2:flowNodeRef>
+        <bpmn2:flowNodeRef>Activity_decide</bpmn2:flowNodeRef>
+        <bpmn2:flowNodeRef>Activity_revise</bpmn2:flowNodeRef>
+        <bpmn2:flowNodeRef>EndEvent_1</bpmn2:flowNodeRef>
+      </bpmn2:lane>
+    </bpmn2:laneSet>
+    <bpmn2:startEvent id="StartEvent_1" name="Application window opens">
+      <bpmn2:outgoing>Flow_1</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:receiveTask id="Activity_receive" name="Receive application">
+      <bpmn2:incoming>Flow_1</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_2</bpmn2:outgoing>
+    </bpmn2:receiveTask>
+    <bpmn2:scriptTask id="Activity_score" name="Score application">
+      <bpmn2:incoming>Flow_2</bpmn2:incoming>
+      <bpmn2:incoming>Flow_6</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_3</bpmn2:outgoing>
+      <bpmn2:multiInstanceLoopCharacteristics isSequential="true" />
+      <bpmn2:script>score.R</bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:exclusiveGateway id="Gateway_ok" name="Score sufficient?">
+      <bpmn2:incoming>Flow_3</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_4</bpmn2:outgoing>
+      <bpmn2:outgoing>Flow_5</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:userTask id="Activity_decide" name="Decide">
+      <bpmn2:incoming>Flow_4</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_7</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:userTask id="Activity_revise" name="Request revision">
+      <bpmn2:incoming>Flow_5</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_6</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:endEvent id="EndEvent_1" name="Decided">
+      <bpmn2:incoming>Flow_7</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Activity_receive" />
+    <bpmn2:sequenceFlow id="Flow_2" sourceRef="Activity_receive" targetRef="Activity_score" />
+    <bpmn2:sequenceFlow id="Flow_3" sourceRef="Activity_score" targetRef="Gateway_ok" />
+    <bpmn2:sequenceFlow id="Flow_4" name="yes" sourceRef="Gateway_ok" targetRef="Activity_decide" />
+    <bpmn2:sequenceFlow id="Flow_5" name="no" sourceRef="Gateway_ok" targetRef="Activity_revise" />
+    <bpmn2:sequenceFlow id="Flow_6" sourceRef="Activity_revise" targetRef="Activity_score" />
+    <bpmn2:sequenceFlow id="Flow_7" sourceRef="Activity_decide" targetRef="EndEvent_1" />
+  </bpmn2:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0">
+      <bpmndi:BPMNShape id="Participant_0_di" bpmnElement="Participant_0" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="800" height="360" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="212" y="152" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

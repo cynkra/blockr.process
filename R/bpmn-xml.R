@@ -7,35 +7,82 @@
 #'
 #' @param x A [bpmn()] model.
 #' @param include_lanes Emit a `laneSet` from the `lane` column? Default
-#'   `FALSE`: the bundled auto-layout library (bpmn-auto-layout 1.3.0) drops
-#'   all sequence-flow edges when a `laneSet` is present, so lanes are
-#'   currently kept out of the layout/render path. The `lane` column stays
-#'   part of the tidy model.
+#'   `TRUE`. Nodes without a lane (synthesized gateways, start/end events)
+#'   inherit the lane of a neighbour, majority of predecessors first. The
+#'   bundled auto-layout library (bpmn-auto-layout 1.3.0) drops all
+#'   sequence-flow edges when a `laneSet` is present, so the layout paths
+#'   ([layout_bpmn()] and the widget) strip the lanes before laying out and
+#'   band the result back into lanes afterwards.
 #'
 #' @return An `xml2::xml_document`.
 #'
 #' @export
-bpmn_xml <- function(x, include_lanes = FALSE) {
+bpmn_xml <- function(x, include_lanes = TRUE) {
   stopifnot(inherits(x, "bpmn"))
 
   doc <- xml2::xml_new_root(
     "bpmn:definitions",
     "xmlns:bpmn" = "http://www.omg.org/spec/BPMN/20100524/MODEL",
     "xmlns:bpmndi" = "http://www.omg.org/spec/BPMN/20100524/DI",
+    "xmlns:dc" = "http://www.omg.org/spec/DD/20100524/DC",
+    "xmlns:di" = "http://www.omg.org/spec/DD/20100524/DI",
     id = "Definitions_1",
     targetNamespace = "http://blockr.process/bpmn"
   )
+
+  # Lanes: one per distinct non-NA `lane` value, every node assigned
+  lane_of <- if (include_lanes) fill_lanes(x$nodes, x$flows) else NULL
+  lanes <- unique(lane_of[!is.na(lane_of)])
+  msgs <- x$messages
+
+  # A pool only makes sense in a collaboration, and message flows require
+  # one: wrap the process in a participant when either is present.
+  if (length(lanes) || !is.null(msgs)) {
+    collab <- xml2::xml_add_child(
+      doc, "bpmn:collaboration",
+      id = "Collaboration_1"
+    )
+    xml2::xml_add_child(
+      collab, "bpmn:participant",
+      id = "Participant_1", name = x$name, processRef = "Process_1"
+    )
+    if (!is.null(msgs)) {
+      pools <- unique(ifelse(
+        msgs$from %in% x$nodes$id, msgs$to, msgs$from
+      ))
+      pool_id <- stats::setNames(paste0("Pool_", make_id(pools)), pools)
+      for (p in pools) {
+        # no processRef: a collapsed, black-box pool
+        xml2::xml_add_child(
+          collab, "bpmn:participant",
+          id = pool_id[[p]], name = p
+        )
+      }
+      ref <- function(v) ifelse(v %in% x$nodes$id, v, pool_id[v])
+      for (i in seq_len(nrow(msgs))) {
+        if (is.na(msgs$name[i]) || !nzchar(msgs$name[i])) {
+          xml2::xml_add_child(
+            collab, "bpmn:messageFlow",
+            id = paste0("MessageFlow_", i),
+            sourceRef = ref(msgs$from[i]), targetRef = ref(msgs$to[i])
+          )
+        } else {
+          xml2::xml_add_child(
+            collab, "bpmn:messageFlow",
+            id = paste0("MessageFlow_", i),
+            sourceRef = ref(msgs$from[i]), targetRef = ref(msgs$to[i]),
+            name = msgs$name[i]
+          )
+        }
+      }
+    }
+  }
+
   proc <- xml2::xml_add_child(
     doc, "bpmn:process",
     id = "Process_1", name = x$name, isExecutable = "false"
   )
 
-  # Lanes (optional): one lane per distinct non-NA `lane` value
-  lanes <- if (include_lanes) {
-    unique(x$nodes$lane[!is.na(x$nodes$lane) & nzchar(x$nodes$lane)])
-  } else {
-    character(0)
-  }
   if (length(lanes)) {
     lane_set <- xml2::xml_add_child(proc, "bpmn:laneSet", id = "LaneSet_1")
     for (ln in lanes) {
@@ -43,7 +90,7 @@ bpmn_xml <- function(x, include_lanes = FALSE) {
         lane_set, "bpmn:lane",
         id = paste0("Lane_", make_id(ln)), name = ln
       )
-      for (nid in x$nodes$id[!is.na(x$nodes$lane) & x$nodes$lane == ln]) {
+      for (nid in x$nodes$id[!is.na(lane_of) & lane_of == ln]) {
         ref <- xml2::xml_add_child(lane, "bpmn:flowNodeRef")
         xml2::xml_set_text(ref, nid)
       }
@@ -78,6 +125,12 @@ bpmn_xml <- function(x, include_lanes = FALSE) {
         isSequential = if (isTRUE(n$multi_seq)) "true" else "false"
       )
     }
+    # What the script task runs (a jobs-directory file or pkg::fun), so a
+    # table -> XML -> table round trip keeps the worker wiring.
+    if (n$type == "scriptTask" && !is.na(n$script) && nzchar(n$script)) {
+      s <- xml2::xml_add_child(el, "bpmn:script")
+      xml2::xml_set_text(s, n$script)
+    }
   }
 
   for (i in seq_len(nrow(x$flows))) {
@@ -103,6 +156,43 @@ bpmn_xml <- function(x, include_lanes = FALSE) {
 #' @noRd
 make_id <- function(x) {
   gsub("[^A-Za-z0-9]", "_", x)
+}
+
+#' Assign every node a lane
+#'
+#' BPMN wants each flow node in exactly one lane once a laneSet exists, but
+#' synthesized nodes (start/end events, join gateways) have none. They
+#' inherit a neighbour's lane: the majority of their predecessors when any
+#' predecessor has one (a join belongs where its inputs converge, the end
+#' event where the process ends), otherwise the majority of their
+#' successors (the start event belongs to whoever acts first).
+#'
+#' Returns a character vector along `nodes` (`NA` throughout when no node
+#' has a lane -- then no laneSet is emitted at all).
+#' @noRd
+fill_lanes <- function(nodes, flows) {
+  lane <- ifelse(is.na(nodes$lane) | !nzchar(nodes$lane), NA, nodes$lane)
+  names(lane) <- nodes$id
+  if (all(is.na(lane))) {
+    return(unname(lane))
+  }
+
+  majority <- function(v) {
+    v <- v[!is.na(v)]
+    if (!length(v)) NA_character_ else names(which.max(table(v)))
+  }
+  for (i in seq_len(nrow(nodes) + 1L)) {
+    open <- names(lane)[is.na(lane)]
+    if (!length(open)) break
+    for (id in open) {
+      pick <- majority(lane[flows$from[flows$to == id]])
+      if (is.na(pick)) pick <- majority(lane[flows$to[flows$from == id]])
+      if (!is.na(pick)) lane[[id]] <- pick
+    }
+  }
+  # a node not connected to anything laned at all
+  lane[is.na(lane)] <- lane[!is.na(lane)][1L]
+  lane
 }
 
 #' Add auto-computed diagram layout to a BPMN model
