@@ -316,3 +316,41 @@ test_that("an allowed package must still export the function", {
   expect_equal(utils::tail(ev$value[ev$field == "status"], 1), "failed")
   expect_match(ev$value[ev$field == "error"], "is not an exported function")
 })
+
+# The PROC_* contract used to travel as `system2(env =)`, which silently
+# delivers nothing on Windows (that argument only reaches commands taking
+# NAME=VALUE on their own command line, and Rscript does not). It is now set
+# in the worker's own process and inherited, so these two tests pin both
+# halves: the child really sees it, and the worker really cleans up after
+# itself.
+
+test_that("a script receives the PROC_* contract in its environment", {
+  store <- tempfile()
+  jobs <- jobs_dir(list("env.R" = paste(
+    "cat(Sys.getenv('PROC_TASK'), Sys.getenv('PROC_INSTANCE'),",
+    "Sys.getenv('PROC_ATTEMPT'), Sys.getenv('PROC_PARAM_SCALE'), sep = '|')"
+  )))
+  p <- single_process("env.R")
+  p$params <- "scale=7"
+
+  run_worker(p, store = store, instance = "2026Q1", jobs = jobs,
+             wait = FALSE, quiet = TRUE)
+
+  log <- file.path(store, "2026Q1", "logs", "greet-1.log")
+  expect_true(file.exists(log))
+  expect_equal(readLines(log, warn = FALSE)[1], "greet|2026Q1|1|7")
+})
+
+test_that("the worker does not leak the contract into its own process", {
+  store <- tempfile()
+  jobs <- jobs_dir(list("hello.R" = "cat('hello\n')"))
+  Sys.setenv(PROC_TASK = "borrowed")
+  on.exit(Sys.unsetenv("PROC_TASK"), add = TRUE)
+
+  run_worker(single_process(), store = store, jobs = jobs, wait = FALSE,
+             quiet = TRUE)
+
+  # a pre-existing value is put back, and one the worker invented is gone
+  expect_equal(Sys.getenv("PROC_TASK"), "borrowed")
+  expect_equal(Sys.getenv("PROC_ARTIFACTS", unset = ""), "")
+})

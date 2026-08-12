@@ -58,6 +58,8 @@ attempt_count <- function(store, instance, task, element = NULL) {
 #' Semicolon-separated `key=value` pairs. This is how a parameter reaches a
 #' script without anyone editing the script: the value is a property of the
 #' task, the script only reads its environment.
+#' Returns a NAMED vector (`c(PROC_PARAM_FULL_RECONCILIATION = "TRUE")`),
+#' because that is what [set_proc_env()] wants.
 #' @noRd
 param_env <- function(params) {
   if (is.null(params) || is.na(params) || !nzchar(params)) {
@@ -65,10 +67,52 @@ param_env <- function(params) {
   }
   toks <- trimws(strsplit(params, ";")[[1]])
   toks <- toks[nzchar(toks)]
-  vapply(toks, function(t) {
-    kv <- strsplit(t, "=", fixed = TRUE)[[1]]
-    paste0("PROC_PARAM_", toupper(trimws(kv[1])), "=", trimws(kv[2]))
-  }, character(1), USE.NAMES = FALSE)
+  if (!length(toks)) {
+    return(character())
+  }
+  kv <- lapply(toks, function(t) trimws(strsplit(t, "=", fixed = TRUE)[[1]]))
+  stats::setNames(
+    vapply(kv, function(p) if (length(p) > 1L) p[2L] else "", character(1)),
+    vapply(kv, function(p) paste0("PROC_PARAM_", toupper(p[1L])), character(1))
+  )
+}
+
+#' Put the task's contract where a child process will actually find it
+#'
+#' `system2(env =)` looks like the obvious way to hand `PROC_*` to a script,
+#' and on a Unix-alike it is. On Windows it is not: R documents that `env`
+#' there reaches only commands that accept `NAME=VALUE` on their own command
+#' line, and `Rscript` does not -- so every variable went missing, every
+#' script wrote to `file.path("", ...)`, and every script task failed. Set
+#' them in this process instead and the child inherits them, which is true
+#' on every platform.
+#'
+#' The worker is single-threaded and restores the previous values on the way
+#' out (see the `on.exit()` in [run_script_task()]), so the pollution lasts
+#' exactly as long as the subprocess.
+#'
+#' @param vars Named character vector.
+#' @return The previous values -- `NA` where a variable was unset -- to hand
+#'   to [restore_proc_env()].
+#' @noRd
+set_proc_env <- function(vars) {
+  if (!length(vars)) {
+    return(character())
+  }
+  old <- Sys.getenv(names(vars), unset = NA_character_, names = TRUE)
+  do.call(Sys.setenv, as.list(vars))
+  old
+}
+
+#' @noRd
+restore_proc_env <- function(old) {
+  if (!length(old)) {
+    return(invisible(NULL))
+  }
+  had <- !is.na(old)
+  if (any(had)) do.call(Sys.setenv, as.list(old[had]))
+  if (any(!had)) Sys.unsetenv(names(old)[!had])
+  invisible(NULL)
 }
 
 #' A check reports its answer on stdout: `::process-output status=false::`
@@ -479,21 +523,27 @@ run_script_task <- function(task, df, store, instance, jobs, element = NULL,
                    instance, element = elem)
   }
 
+  # Set the contract in THIS process and let the child inherit it, rather
+  # than passing `env =` to system2(). See set_proc_env(): on Windows that
+  # argument reaches only commands that take `NAME=VALUE` on their own
+  # command line, which Rscript does not.
+  old_env <- set_proc_env(c(
+    PROC_INSTANCE = instance,
+    PROC_TASK = task,
+    PROC_ELEMENT = elem %||% "",
+    PROC_ATTEMPT = as.character(attempt),
+    PROC_ARTIFACTS = artifacts,
+    PROC_STORE = normalizePath(store, mustWork = FALSE),
+    param_env(params)
+  ))
+  on.exit(restore_proc_env(old_env), add = TRUE)
+
   t0 <- Sys.time()
   code <- suppressWarnings(system2(
     spec$command,
     spec$args,
     stdout = logfile, stderr = logfile,
-    timeout = limit,
-    env = c(
-      paste0("PROC_INSTANCE=", instance),
-      paste0("PROC_TASK=", task),
-      paste0("PROC_ELEMENT=", elem %||% ""),
-      paste0("PROC_ATTEMPT=", attempt),
-      paste0("PROC_ARTIFACTS=", artifacts),
-      paste0("PROC_STORE=", normalizePath(store, mustWork = FALSE)),
-      param_env(params)
-    )
+    timeout = limit
   ))
   took <- round(as.numeric(difftime(Sys.time(), t0, units = "secs")), 1)
   timed_out <- limit > 0 && identical(as.integer(code), 124L)
