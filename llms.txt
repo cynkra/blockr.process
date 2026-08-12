@@ -3,17 +3,14 @@
 **[Live demo: a quarterly data collection
 →](https://blockr.cloud/app/data-collection)**
 
-> **A working prototype.** Runs real processes, executes the tasks that
-> are scripts in a headless worker, and takes in events from systems
-> outside the app. The live demo above is the whole thing end to end.
->
-> It is also new. blockr.process is the successor to
-> [blockr.task](https://github.com/cynkra/blockr.task), and the model it
-> arrives at (the wide table, the event log, the multi-instance group)
-> has not yet met enough real processes to be called settled. **Expect
-> the API to change:** function names, column names and the block
-> interface may all move before a stable release. Pin a commit if you
-> build on it.
+A working prototype. It runs processes, executes the tasks that are
+scripts in a headless worker, and picks up events from other systems;
+the live demo above does all three.
+
+It replaces [blockr.task](https://github.com/cynkra/blockr.task), so the
+API is still moving. Function names, column names and the block
+interface may change before a stable release. Pin a commit if you depend
+on it.
 
 **The organization as a data frame.** A process definition is one wide
 table: one row per task, columns saying who does it, what it waits for,
@@ -178,16 +175,16 @@ Two vignettes cover the parts that leave the R session:
 
 ## Demo
 
-**[Try it live: a quarterly data
-collection](https://blockr.cloud/app/data-collection)**: eight reporting
-units, real scripts running in a worker, a delivery platform writing
-into the inbox, and a rework loop the diagram travels.
+[Try it live: a quarterly data
+collection](https://blockr.cloud/app/data-collection). Eight reporting
+units, a worker running the scripts, a delivery platform writing into
+the inbox, and a rework loop.
 
-Open one instance: the task list unfolds per unit, “Simulate delivery”
-writes an inbox message that the *worker* turns into an event, the QA
-check answers `false` on its first attempt so the rework branch opens,
-and after the reconciliation it answers `true`. Open a second browser
-window on the same demo and you are both watching the same event log.
+Start an instance and the task list unfolds per unit. “Simulate
+delivery” writes an inbox message that the worker turns into an event;
+the QA check answers `false` on its first attempt, so the rework branch
+opens, and after the reconciliation it answers `true`. Open a second
+browser window on the same demo and you both watch the same event log.
 
 The same board runs locally, from the installed package:
 

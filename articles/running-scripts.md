@@ -44,9 +44,9 @@ process <- data.frame(
 )
 
 run_worker(process, store = store, jobs = jobs, wait = FALSE)
-#> worker: instance=instance store=/tmp/Rtmpk3dDKs/file25fb470fe92f jobs=/tmp/Rtmpk3dDKs/file25fbe444071 code=0067d2a2
+#> worker: instance=instance store=/tmp/Rtmpa3Q6S0/file26875762aadb jobs=/tmp/Rtmpa3Q6S0/file26874c632812 code=0067d2a2
 #> * count -> count.R
-#>   done in 0.2s  (/tmp/Rtmpk3dDKs/file25fb470fe92f/instance/logs/count-1.log)
+#>   done in 0.1s  (/tmp/Rtmpa3Q6S0/file26875762aadb/instance/logs/count-1.log)
 #> worker: waiting for people on: sign_off
 ```
 
@@ -58,7 +58,7 @@ so. Everything it did is in the log:
 instance_log(store, "instance")[, c("task", "field", "value", "actor")]
 #>    task        field                     value  actor
 #> 6 count       status                      done worker
-#> 5 count         took                      0.2s worker
+#> 5 count         took                      0.1s worker
 #> 4 count          log instance/logs/count-1.log worker
 #> 3 count code_version                  0067d2a2 worker
 #> 2 count      attempt                         1 worker

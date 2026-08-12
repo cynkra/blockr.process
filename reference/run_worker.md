@@ -108,7 +108,7 @@ run_worker(process, store = store, jobs = jobs, wait = FALSE, quiet = TRUE)
 instance_log(store, "instance")[, c("task", "field", "value")]
 #>    task        field                     value
 #> 6 greet       status                      done
-#> 5 greet         took                      0.2s
+#> 5 greet         took                      0.1s
 #> 4 greet          log instance/logs/greet-1.log
 #> 3 greet code_version                  098a9a45
 #> 2 greet      attempt                         1
