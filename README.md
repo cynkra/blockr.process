@@ -2,13 +2,13 @@
 
 **[Live demo: a quarterly data collection →](https://blockr.cloud/app/data-collection)**
 
-A working prototype. It runs processes, executes the tasks that are scripts
-in a headless worker, and picks up events from other systems; the live demo
-above does all three.
-
-It replaces [blockr.task](https://github.com/cynkra/blockr.task), so the API
-is still moving. Function names, column names and the block interface may
-change before a stable release. Pin a commit if you depend on it.
+> A working prototype. It runs processes, executes the tasks that are
+> scripts in a headless worker, and picks up events from other systems; the
+> live demo above does all three.
+>
+> It replaces [blockr.task](https://github.com/cynkra/blockr.task), so the
+> API is still moving. Function names, column names and the block interface
+> may change before a stable release. Pin a commit if you depend on it.
 
 **The organization as a data frame.** A process definition is one wide
 table: one row per task, columns saying who does it, what it waits for, and
