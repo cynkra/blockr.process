@@ -184,11 +184,9 @@
   color: var(--blockr-color-text-secondary, #374151);
 }
 
+/* Drift is information, not a problem: the instance is running correctly on
+   the version it was opened with. Same weight as the meta line above it. */
 .sib-drift {
   font-size: var(--blockr-font-size-sm, 0.8125rem);
-  color: var(--blockr-color-warning-text, #b45309);
-  background: var(--blockr-color-warning-bg, #fffbeb);
-  border: 1px solid var(--blockr-color-warning, #f59e0b);
-  border-radius: 8px;
-  padding: 8px 10px;
+  color: var(--blockr-color-text-muted, #6b7280);
 }

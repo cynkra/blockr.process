@@ -6,18 +6,18 @@
 # lists as a plain select. Deployments bake their lists in by wrapping the
 # constructor (see `sources`), the same way the demo's dcdemo does.
 #
-# Before opening, the block IS the moment: what will be created, one
-# button. After opening it is the instance's header -- id, version, created,
-# size -- and, because the live definition keeps flowing in, it can say
-# when the process has drifted from the stamped version: edits apply to
-# the NEXT instance, never this one.
+# Before opening, the card shows what will be created and one button. After
+# opening it is the instance's header (id, version, created, size), and
+# because the live definition keeps flowing in it can note when the process
+# has drifted from the stamped version. Edits apply to the next instance,
+# not to the running one.
 
 #' Open-instance block
 #'
 #' Takes the process definition as its input and opens an instance from it:
 #' pick the year (the instance id), pick a collection, click "Start
 #' instance" -- one [start_instance()]. Once the instance exists the card shows
-#' its header (id, [process_version()], created, size) and warns when the
+#' its header (id, [process_version()], created, size) and notes when the
 #' incoming definition no longer matches the stamped one.
 #'
 #' The block emits [instance_view()], the expanded instance table.
@@ -263,9 +263,8 @@ start_header <- function(ns, store, instance, stamped, def) {
       div(
         class = "sib-drift",
         paste0(
-          "The definition has changed since this instance started (now ",
-          process_version(def),
-          "). It applies to the next instance, never to this one."
+          "definition changed (", process_version(def),
+          ") \u00b7 applies to the next instance"
         )
       )
     }
