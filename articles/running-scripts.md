@@ -44,9 +44,9 @@ process <- data.frame(
 )
 
 run_worker(process, store = store, jobs = jobs, wait = FALSE)
-#> worker: instance=instance store=/tmp/Rtmpzzeq8x/file27971bf47494 jobs=/tmp/Rtmpzzeq8x/file279748eb5465 code=0067d2a2
+#> worker: instance=instance store=/tmp/Rtmp0a2S57/file26416ec7f225 jobs=/tmp/Rtmp0a2S57/file2641260da979 code=0067d2a2
 #> * count -> count.R
-#>   done in 0.2s  (/tmp/Rtmpzzeq8x/file27971bf47494/instance/logs/count-1.log)
+#>   done in 0.2s  (/tmp/Rtmp0a2S57/file26416ec7f225/instance/logs/count-1.log)
 #> worker: waiting for people on: sign_off
 ```
 

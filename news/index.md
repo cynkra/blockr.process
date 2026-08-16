@@ -2,6 +2,19 @@
 
 ## blockr.process (development version)
 
+- **Ingesting a batch of inbox messages no longer re-reads the instance
+  for every message.** `check_message()` needs three things from the
+  store – what `"latest"` resolves to, the stamped definition, the
+  element list – and each of them parses the whole event log, which
+  holds the element list as a single JSON blob. Read once per instance
+  per
+  [`ingest_inbox()`](https://cynkra.github.io/blockr.process/reference/ingest_inbox.md)
+  call instead of once per message: the first synchronisation of a
+  process over 2115 elements went from over five minutes (still
+  unfinished) to 5.8 seconds. Instances neither appear nor change while
+  their own inbox is being ingested, so the batch can safely share one
+  read.
+
 - **BPMN files can now be read, not only written.**
   [`read_bpmn()`](https://cynkra.github.io/blockr.process/reference/read_bpmn.md)
   parses a BPMN 2.0 interchange document – from this package, Camunda
