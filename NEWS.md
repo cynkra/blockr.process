@@ -1,5 +1,15 @@
 # blockr.process (development version)
 
+* **The tasks block folds its element lists.** A task that repeats over
+  thousands of elements used to paint a DOM node for each of them on every
+  render -- for a process over 2115 elements (8462 rows) that was around
+  thirty seconds, and the overview drowned in the detail. Sections with more
+  than 25 elements now start folded, so what you see first is one line per
+  step with its progress bar; unfolding draws 200 at a time with a "show the
+  rest" button. 8462 rows render as 66 DOM nodes, unfolding a section costs
+  27ms, and a section folded or unfolded by hand stays that way. Grouping the
+  rows by task is also one pass now rather than a scan of every row per task.
+
 * **Ingesting a batch of inbox messages no longer re-reads the instance for
   every message.** `check_message()` needs three things from the store --
   what `"latest"` resolves to, the stamped definition, the element list --

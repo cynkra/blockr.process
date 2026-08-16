@@ -12,6 +12,11 @@
 
   const NOT_FINISHED = ['open', 'doing'];
 
+  /** Sections with more elements than this start folded. */
+  const FOLD_ABOVE = 25;
+  /** Elements drawn per unfolded section before the "show the rest" line. */
+  const PAGE = 200;
+
   /**
    * jsonlite auto_unbox turns length-1 vectors into scalars.
    * @template T
@@ -63,6 +68,19 @@
       /** @type {Set<string>} */
       this._sel = new Set();
       this._assignTo = '';
+      /**
+       * Task ids whose element list is unfolded. A collapsed section is a
+       * heading and a bar; an unfolded one is a DOM node per element, and a
+       * process that repeats over a few thousand of them (the FS
+       * Jahreserhebung: 2115 Gemeinden, 8462 rows) takes half a minute to
+       * paint if every section unfolds itself. Sections above
+       * FOLD_ABOVE start folded, so what you see first is where the whole
+       * thing stands; small processes are unaffected and look as before.
+       * @type {Set<string>}
+       */
+      this._open = new Set();
+      /** Elements rendered per unfolded section before "show the rest". */
+      this._cap = {};
 
       this.el.classList.add('tasks-block');
       this._bar = document.createElement('div');
@@ -248,18 +266,66 @@
         return;
       }
 
+      // One pass to group, not one scan of every row per task: with 8462
+      // rows and seven tasks the filter-per-task was most of the work before
+      // a single node was made.
+      /** @type {Record<string, TaskRow[]>} */
+      const byTask = {};
+      this._payload.rows.forEach((r) => {
+        if (!this._visible(r)) return;
+        (byTask[r.task] = byTask[r.task] || []).push(r);
+      });
+
       this._payload.tasks.forEach((task) => {
-        const rows = this._payload.rows.filter((r) => r.task === task.task);
-        const shown = rows.filter((r) => this._visible(r));
+        const shown = byTask[task.task] || [];
         const cnt = this._payload.counts[task.task];
 
         if (task.per) {
-          this._list.appendChild(this._sectionHead(task, shown, cnt));
-          shown.forEach((r) => this._list.appendChild(this._row(task, r, true)));
+          const open = this._isOpen(task.task, shown.length);
+          this._list.appendChild(this._sectionHead(task, shown, cnt, open));
+          if (!open) return;
+
+          const cap = this._cap[task.task] || PAGE;
+          shown.slice(0, cap).forEach(
+            (r) => this._list.appendChild(this._row(task, r, true))
+          );
+          if (shown.length > cap) {
+            this._list.appendChild(this._more(task.task, cap, shown.length));
+          }
         } else if (shown.length) {
           shown.forEach((r) => this._list.appendChild(this._row(task, r, false)));
         }
       });
+    }
+
+    /**
+     * Folded or not: what the user last clicked, else folded when the section
+     * is big enough for painting it to be felt.
+     * @param {string} task
+     * @param {number} n
+     */
+    _isOpen(task, n) {
+      if (this._open.has(task)) return true;
+      if (this._open.has('!' + task)) return false;   // folded by hand
+      return n <= FOLD_ABOVE;
+    }
+
+    /**
+     * @param {string} task
+     * @param {number} cap
+     * @param {number} total
+     */
+    _more(task, cap, total) {
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'tasks-more';
+      more.textContent = 'show ' + Math.min(PAGE, total - cap) +
+        ' more of ' + total;
+      more.addEventListener('click', () => {
+        this._cap[task] = cap + PAGE;
+        this._render();
+      });
+      return more;
     }
 
     /**
@@ -268,9 +334,29 @@
      * @param {{total: number, done: number, doing: number, blocked: number,
      *   pct: number, pct_doing: number, pct_blocked: number} | undefined} cnt
      */
-    _sectionHead(task, shown, cnt) {
+    _sectionHead(task, shown, cnt, open) {
       const head = document.createElement('div');
       head.className = 'tasks-section';
+
+      const fold = document.createElement('button');
+      fold.type = 'button';
+      fold.className = 'tasks-fold';
+      fold.setAttribute('aria-expanded', open ? 'true' : 'false');
+      fold.title = open ? 'fold' : 'unfold';
+      fold.textContent = open ? '▾' : '▸';
+      fold.addEventListener('click', () => {
+        // Both directions are remembered: a section folded by hand stays
+        // folded even when a filter leaves few enough rows to auto-unfold it.
+        if (open) {
+          this._open.delete(task.task);
+          this._open.add('!' + task.task);
+        } else {
+          this._open.delete('!' + task.task);
+          this._open.add(task.task);
+        }
+        this._render();
+      });
+      head.appendChild(fold);
 
       const check = document.createElement('input');
       check.type = 'checkbox';
