@@ -2,6 +2,14 @@
 
 ## blockr.process (development version)
 
+- **The tasks block sorts by status.** A `sort` control in the toolbar,
+  defaulting to `by status`: open, then in progress, then waiting, then
+  skipped, then done – so unfolding a step of two thousand elements
+  leads with the ones that still need somebody rather than with two
+  hundred that are finished. Stable within a status, so an element keeps
+  its place in the collection’s own order and does not jump about as its
+  neighbours move. `by id` restores the collection order.
+
 - **The tasks block folds its element lists.** A task that repeats over
   thousands of elements used to paint a DOM node for each of them on
   every render – for a process over 2115 elements (8462 rows) that was
