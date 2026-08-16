@@ -109,13 +109,58 @@ inbox_park <- function(path, dir, reason = NULL) {
   invisible(target)
 }
 
+#' What `check_message()` reads out of the store, read once
+#'
+#' Validating a message needs three things from the store: which instance
+#' `"latest"` means, the definition it was opened with, and its element list.
+#' Each of those parses the whole event log line by line, and the log holds
+#' the element list as a single JSON blob -- so for an instance over a few
+#' thousand elements, reading it is not cheap. Doing that per message made
+#' ingestion quadratic: the first sync of the FS Jahreserhebung writes one
+#' message per Gemeinde, and 2115 of them took over five minutes, nearly all
+#' of it re-parsing the same log.
+#'
+#' Instances do not appear or change while their inbox is being ingested, so
+#' one read per instance per call is enough. Keyed by the id as the message
+#' spells it, `"latest"` included.
+#'
+#' @return A list of accessors, each memoised.
+#' @noRd
+message_cache <- function(store) {
+
+  seen <- new.env(parent = emptyenv())
+
+  # exists(), not is.null(): NULL is a legitimate answer (an instance that
+  # was never started), and caching it is the point.
+  once <- function(key, compute) {
+    if (!exists(key, seen, inherits = FALSE)) {
+      assign(key, compute(), seen)
+    }
+    get(key, seen, inherits = FALSE)
+  }
+
+  list(
+    instance = function(x) {
+      once(paste0("i-", x), function() resolve_instance(store, x))
+    },
+    definition = function(i) {
+      once(paste0("d-", i), function() instance_definition(store, i))
+    },
+    collection = function(i) {
+      once(paste0("c-", i), function() instance_collection(store, i))
+    }
+  )
+}
+
 #' Check one message against the instance it names
 #'
+#' @param cache From [message_cache()]; supply one shared cache when checking
+#'   several messages against the same store.
 #' @return `list(status, reason, event)` where status is `ok`, `reject`
 #'   (permanently wrong, and no retry will fix it) or `pending` (right, but
 #'   too early -- the instance it names has not been started).
 #' @noRd
-check_message <- function(msg, store) {
+check_message <- function(msg, store, cache = message_cache(store)) {
   bad <- function(why) list(status = "reject", reason = why)
   if (!is.list(msg) || is.null(msg$task)) {
     return(bad("no 'task' field"))
@@ -132,8 +177,8 @@ check_message <- function(msg, store) {
   }
 
   instance <- scalar(msg$instance) %||% "latest"
-  instance <- resolve_instance(store, instance)
-  def <- instance_definition(store, instance)
+  instance <- cache$instance(instance)
+  def <- cache$definition(instance)
   if (is.null(def)) {
     return(list(
       status = "pending",
@@ -152,7 +197,7 @@ check_message <- function(msg, store) {
       return(bad(paste0("task '", task, "' repeats per ", per[[task]],
                         ", so the message needs an 'element'")))
     }
-    known <- instance_collection(store, instance)
+    known <- cache$collection(instance)
     ids <- if (is.null(known) || !ncol(known)) character() else {
       as.character(known[[1L]])
     }
@@ -222,6 +267,11 @@ ingest_inbox <- function(store = ".runs", quiet = FALSE) {
   applied <- 0L
   pending <- 0L
 
+  # One read of each instance for the whole batch, not one per message; see
+  # message_cache(). This is what keeps a first sync of a few thousand
+  # messages from taking minutes.
+  cache <- message_cache(store)
+
   for (f in files) {
     # the name is the key: a message already applied is never applied twice,
     # however many times the sender resends it
@@ -236,7 +286,7 @@ ingest_inbox <- function(store = ".runs", quiet = FALSE) {
       if (!quiet) message("inbox: ", basename(f), " rejected (unreadable JSON)")
       next
     }
-    res <- check_message(msg, store)
+    res <- check_message(msg, store, cache)
     if (identical(res$status, "pending")) {
       pending <- pending + 1L
       next

@@ -157,3 +157,27 @@ test_that("a message can assign, not just finish", {
   expect_equal(tab$assignee[tab$task == "review" & tab$element == "north"],
                "ana")
 })
+
+test_that("ingesting a batch reads the instance once, not once per message", {
+  # The FS Jahreserhebung's first sync writes one message per Gemeinde. When
+  # every message re-read the instance -- and the element list is one JSON
+  # blob in the event log -- 2115 messages took over five minutes. Cheap to
+  # let back in by accident, so count the reads rather than the seconds.
+  store <- started(as.character(1:20))
+  for (el in as.character(1:20)) {
+    write_inbox_message(store, "delivery", element = el, instance = "2026Q1",
+                        id = paste0("delivery-2026Q1-", el))
+  }
+
+  reads <- 0L
+  real <- instance_definition
+  local_mocked_bindings(
+    instance_definition = function(...) {
+      reads <<- reads + 1L
+      real(...)
+    }
+  )
+
+  expect_equal(ingest_inbox(store, quiet = TRUE), 20L)
+  expect_equal(reads, 1L)
+})
