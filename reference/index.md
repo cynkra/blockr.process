@@ -100,14 +100,18 @@ The process on a blockr board.
 
 ## BPMN
 
-The diagram half – tidy model, interchange XML, auto-layout, widget.
-Pure R plus a bundled JS renderer; depends on nothing else in the
-package.
+The diagram half – tidy model, interchange XML in both directions,
+auto-layout with lanes and pools, widget. Pure R plus a bundled JS
+renderer; depends on nothing else in the package.
 
 - [`bpmn()`](https://cynkra.github.io/blockr.process/reference/bpmn.md)
   : Create a tidy BPMN model
 - [`as_bpmn()`](https://cynkra.github.io/blockr.process/reference/as_bpmn.md)
   : Convert a wide process table to a tidy BPMN model
+- [`read_bpmn()`](https://cynkra.github.io/blockr.process/reference/read_bpmn.md)
+  : Read a BPMN 2.0 XML file into a tidy BPMN model
+- [`bpmn_to_table()`](https://cynkra.github.io/blockr.process/reference/bpmn_to_table.md)
+  : Convert a tidy BPMN model to a wide process-table scaffold
 - [`bpmn_xml()`](https://cynkra.github.io/blockr.process/reference/bpmn_xml.md)
   : Generate BPMN 2.0 XML from a tidy BPMN model
 - [`write_bpmn()`](https://cynkra.github.io/blockr.process/reference/write_bpmn.md)

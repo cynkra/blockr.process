@@ -1,0 +1,40 @@
+# Read a BPMN 2.0 XML file into a tidy BPMN model
+
+The inverse of \[bpmn_xml()\]: parses the semantic half of a BPMN 2.0
+interchange document – from this package, Camunda Modeler, bpmn.io or
+any other standards-conform tool – into a \[bpmn()\] model. Diagram
+coordinates are ignored (layout is always recomputed), namespace
+prefixes don't matter (\`bpmn:\`, \`bpmn2:\`, none).
+
+## Usage
+
+``` r
+read_bpmn(x)
+```
+
+## Arguments
+
+- x:
+
+  A path to a \`.bpmn\` file, a string of BPMN XML, or an
+  \`xml2::xml_document\`.
+
+## Value
+
+A \[bpmn()\] model. Pass it on to \[bpmn_to_table()\] to get a wide
+process-table scaffold blockr.process can run.
+
+## Details
+
+What is read: the flow nodes \[bpmn()\] models (events, tasks,
+gateways), sequence flows with their labels, lanes, multi-instance
+markers (\`isSequential\` included), a \`\<script\>\` child on script
+tasks (the worker wiring \[bpmn_xml()\] writes), and message flows to or
+from collapsed pools. A file using elements outside that vocabulary
+(sub-processes, boundary or intermediate events, call activities) is
+refused with a list of the offending elements rather than silently
+flattened.
+
+## See also
+
+\[bpmn_to_table()\], \[bpmn_xml()\], \[write_bpmn()\]

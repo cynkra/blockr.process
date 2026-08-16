@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">blockr.process</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -307,7 +307,7 @@
       </dl></div><div class="section level2">
       <h2 id="bpmn">BPMN<a class="anchor" aria-label="anchor" href="#bpmn"></a></h2>
 
-      <div class="section-desc"><p>The diagram half – tidy model, interchange XML, auto-layout, widget. Pure R plus a bundled JS renderer; depends on nothing else in the package.</p></div>
+      <div class="section-desc"><p>The diagram half – tidy model, interchange XML in both directions, auto-layout with lanes and pools, widget. Pure R plus a bundled JS renderer; depends on nothing else in the package.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -327,6 +327,20 @@
 
         </dt>
         <dd>Convert a wide process table to a tidy BPMN model</dd>
+
+        <dt>
+
+          <code><a href="read_bpmn.html">read_bpmn()</a></code>
+
+        </dt>
+        <dd>Read a BPMN 2.0 XML file into a tidy BPMN model</dd>
+
+        <dt>
+
+          <code><a href="bpmn_to_table.html">bpmn_to_table()</a></code>
+
+        </dt>
+        <dd>Convert a tidy BPMN model to a wide process-table scaffold</dd>
 
         <dt>
 

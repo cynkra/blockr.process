@@ -15,7 +15,7 @@ of the model.'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">blockr.process</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,7 @@ of the model.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">bpmn</span><span class="op">(</span><span class="va">nodes</span>, <span class="va">flows</span>, name <span class="op">=</span> <span class="st">"Process"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">bpmn</span><span class="op">(</span><span class="va">nodes</span>, <span class="va">flows</span>, name <span class="op">=</span> <span class="st">"Process"</span>, messages <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -64,14 +64,18 @@ of the model.</p>
 
 <dl><dt id="arg-nodes">nodes<a class="anchor" aria-label="anchor" href="#arg-nodes"></a></dt>
 <dd><p>Data frame with columns `id`, `name`, `type` and optionally
-`lane`, `multi` (logical: draw the activity as multi-instance, the
-`|||` marker) and `multi_seq` (logical: that multi-instance runs its
-elements one at a time, BPMN `isSequential`, drawn as the `≡` marker).
+`lane`, `script` (what a script task runs, kept for round-tripping
+through [bpmn_to_table()]), `multi` (logical: draw the activity as
+multi-instance, the `|||` marker) and `multi_seq` (logical: that
+multi-instance runs its elements one at a time, BPMN `isSequential`,
+drawn as the `≡` marker).
 Recognized types (aliases in parentheses): `startEvent`
 (`start`), `endEvent` (`end`), `task`, `userTask` (`user`),
 `serviceTask` (`service`), `scriptTask` (`script`), `manualTask`
-(`manual`), `exclusiveGateway` (`gateway`, `xor`), `parallelGateway`
-(`parallel`, `and`), `complexGateway` (`complex`, the quorum join).</p></dd>
+(`manual`), `sendTask` (`send`), `receiveTask` (`receive`, a task an
+incoming message completes), `exclusiveGateway` (`gateway`, `xor`),
+`parallelGateway` (`parallel`, `and`), `inclusiveGateway`
+(`inclusive`, `or`), `complexGateway` (`complex`, the quorum join).</p></dd>
 
 
 <dt id="arg-flows">flows<a class="anchor" aria-label="anchor" href="#arg-flows"></a></dt>
@@ -82,10 +86,20 @@ Recognized types (aliases in parentheses): `startEvent`
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>Process name.</p></dd>
 
+
+<dt id="arg-messages">messages<a class="anchor" aria-label="anchor" href="#arg-messages"></a></dt>
+<dd><p>Optional data frame with columns `from` and `to`: message
+flows between the process and the outside world. Exactly one side of
+each row must be a node id; the other side is the label of an external
+pool (drawn collapsed), e.g.
+`data.frame(from = "Reporting unit", to = "deliver")` for an incoming
+delivery. An optional `name` column labels the flow.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A `bpmn` object: a list with `nodes`, `flows` and `name`.</p>
+    <p>A `bpmn` object: a list with `nodes`, `flows`, `name` and
+  `messages` (`NULL` when there are none).</p>
     </div>
 
     <div class="section level2">
@@ -102,12 +116,12 @@ Recognized types (aliases in parentheses): `startEvent`
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bpmn&gt; Process: 3 node(s), 2 flow(s)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Nodes:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 6</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   id    name    type       lane  multi multi_seq</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> a     Start   startEvent <span style="color: #BB0000;">NA</span>    FALSE FALSE    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> b     Do work task       <span style="color: #BB0000;">NA</span>    FALSE FALSE    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> c     Done    endEvent   <span style="color: #BB0000;">NA</span>    FALSE FALSE    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 7</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   id    name    type       lane  script multi multi_seq</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> a     Start   startEvent <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>     FALSE FALSE    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> b     Do work task       <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>     FALSE FALSE    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> c     Done    endEvent   <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>     FALSE FALSE    </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Flows:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 3</span></span>

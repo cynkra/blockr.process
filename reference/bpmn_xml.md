@@ -8,7 +8,7 @@ add auto-computed layout, or \[bpmn_widget()\] to render directly
 ## Usage
 
 ``` r
-bpmn_xml(x, include_lanes = FALSE)
+bpmn_xml(x, include_lanes = TRUE)
 ```
 
 ## Arguments
@@ -19,11 +19,13 @@ bpmn_xml(x, include_lanes = FALSE)
 
 - include_lanes:
 
-  Emit a \`laneSet\` from the \`lane\` column? Default \`FALSE\`: the
-  bundled auto-layout library (bpmn-auto-layout 1.3.0) drops all
-  sequence-flow edges when a \`laneSet\` is present, so lanes are
-  currently kept out of the layout/render path. The \`lane\` column
-  stays part of the tidy model.
+  Emit a \`laneSet\` from the \`lane\` column? Default \`TRUE\`. Nodes
+  without a lane (synthesized gateways, start/end events) inherit the
+  lane of a neighbour, majority of predecessors first. The bundled
+  auto-layout library (bpmn-auto-layout 1.3.0) drops all sequence-flow
+  edges when a \`laneSet\` is present, so the layout paths
+  (\[layout_bpmn()\] and the widget) strip the lanes before laying out
+  and band the result back into lanes afterwards.
 
 ## Value
 
