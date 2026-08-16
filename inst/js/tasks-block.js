@@ -52,6 +52,18 @@
       ? d
       : 'finished';
 
+  /**
+   * Sort rank of a display status: what still needs somebody, first. Sorting
+   * by status is how you answer "which ones are not in yet" on a collection
+   * of a few thousand -- scrolling for the handful of open ones among two
+   * thousand done is not an answer.
+   * @param {string} d
+   */
+  const rank = (d) => {
+    const i = ['open', 'doing', 'blocked', 'skipped', 'done'].indexOf(d);
+    return i < 0 ? 4 : i;   // an outcome label (true/false/...) counts as done
+  };
+
   /** @param {TaskRow} row */
   const keyOf = (row) => row.task + '@' + (row.element || '');
 
@@ -81,6 +93,8 @@
       this._open = new Set();
       /** Elements rendered per unfolded section before "show the rest". */
       this._cap = {};
+      /** `status` (what needs doing first) or `id` (the collection's order). */
+      this._sort = 'status';
 
       this.el.classList.add('tasks-block');
       this._bar = document.createElement('div');
@@ -215,6 +229,18 @@
         );
       }
 
+      // Sorting, not just filtering: filtering to `open` hides how many are
+      // done, and the count in the section head is what you compare against.
+      // Spelled "by ..." so it cannot be read as a second status filter.
+      // Plain strings, not {value, label} pairs: this select renders both
+      // parts of a pair (it is built for code + description, as in the
+      // Haushalt picker), which would read "statusby status" here.
+      this._select(
+        this._bar, ['by status', 'by id'],
+        this._sort === 'id' ? 'by id' : 'by status', 'sort',
+        (v) => { this._sort = v === 'by id' ? 'id' : 'status'; this._render(); }
+      );
+
       const meta = document.createElement('span');
       meta.className = 'tasks-meta';
       meta.textContent = 'Instance ' + this._payload.instance +
@@ -275,6 +301,20 @@
         if (!this._visible(r)) return;
         (byTask[r.task] = byTask[r.task] || []).push(r);
       });
+
+      if (this._sort === 'status') {
+        // Stable within a status, so the collection's own order still holds
+        // inside each group and an element does not jump about as it moves.
+        Object.keys(byTask).forEach((k) => {
+          byTask[k] = byTask[k]
+            .map((r, i) => ({ r: r, i: i }))
+            .sort((a, b) => {
+              const d = rank(a.r.disp || 'open') - rank(b.r.disp || 'open');
+              return d !== 0 ? d : a.i - b.i;
+            })
+            .map((x) => x.r);
+        });
+      }
 
       this._payload.tasks.forEach((task) => {
         const shown = byTask[task.task] || [];
