@@ -338,12 +338,20 @@
       const head = document.createElement('div');
       head.className = 'tasks-section';
 
+      // Same chevron as blockr.viz's tables (section_chevron_svg()), same
+      // contract: the SECTION carries `collapsed` and the CSS turns the
+      // icon, so there is one rotation rule rather than two glyphs.
+      if (!open) head.classList.add('collapsed');
+
       const fold = document.createElement('button');
       fold.type = 'button';
       fold.className = 'tasks-fold';
       fold.setAttribute('aria-expanded', open ? 'true' : 'false');
       fold.title = open ? 'fold' : 'unfold';
-      fold.textContent = open ? '▾' : '▸';
+      fold.innerHTML = '<svg class="blockr-chev" viewBox="0 0 24 24" ' +
+        'fill="none" stroke="currentColor" stroke-width="2.4" ' +
+        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M6 9l6 6 6-6"/></svg>';
       fold.addEventListener('click', () => {
         // Both directions are remembered: a section folded by hand stays
         // folded even when a filter leaves few enough rows to auto-unfold it.

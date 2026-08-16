@@ -52,10 +52,11 @@
 }
 
 .tasks-block .tasks-section {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px 4px;
+  padding: 6px 10px 4px 26px;
   margin-top: 4px;
   border-top: 1px solid #f3f4f6;
   font-size: 12px;
@@ -108,6 +109,7 @@
   gap: 8px;
   margin-bottom: 4px;
   padding: 0 10px;
+  margin-left: 26px;
 }
 
 .tasks-block .tasks-row--element {
@@ -187,25 +189,48 @@
   white-space: nowrap;
 }
 
+/* The chevron sits in a gutter to the LEFT of the cards, not inside the
+   heading: the step names then line up with the element cards below them,
+   and the fold affordance reads as a margin mark rather than as part of the
+   title. Same svg and same rotation contract as blockr.viz's tables --
+   the section carries `collapsed`, the icon turns. */
 .tasks-block .tasks-fold {
-  flex: 0 0 auto;
-  width: 16px;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: 0;
+  border-radius: 4px;
   background: none;
-  color: #6b7280;
-  font-size: 11px;
-  line-height: 1;
+  color: #9ca3af;
   cursor: pointer;
 }
 
 .tasks-block .tasks-fold:hover {
   color: #111827;
+  background: #f3f4f6;
+}
+
+.tasks-block .tasks-fold .blockr-chev {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.tasks-block .tasks-section.collapsed .blockr-chev {
+  transform: rotate(-90deg);
 }
 
 .tasks-block .tasks-more {
   display: block;
-  margin: 2px 0 6px 34px;
+  margin: 2px 0 6px 26px;
   padding: 2px 8px;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
