@@ -91,7 +91,10 @@
        * @type {Set<string>}
        */
       this._open = new Set();
-      /** Elements rendered per unfolded section before "show the rest". */
+      /**
+       * Elements rendered per unfolded section before "show the rest".
+       * @type {Record<string, number>}
+       */
       this._cap = {};
       /** `status` (what needs doing first) or `id` (the collection's order). */
       this._sort = 'status';
@@ -373,6 +376,7 @@
      * @param {TaskRow[]} shown
      * @param {{total: number, done: number, doing: number, blocked: number,
      *   pct: number, pct_doing: number, pct_blocked: number} | undefined} cnt
+     * @param {boolean} open
      */
     _sectionHead(task, shown, cnt, open) {
       const head = document.createElement('div');
