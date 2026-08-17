@@ -1,0 +1,9 @@
+linters: linters_with_defaults(
+    object_name_linter = NULL,        # S3 dotted method names; blockr.ci's own default
+    object_usage_linter = NULL,       # testthat verbs (skip) and NSE column names
+    line_length_linter = NULL,        # matches blockr.dm / blockr.dplyr / blockr.ai
+    indentation_linter = NULL,        # hand-aligned call arguments
+    semicolon_linter = NULL,          # compound `x <- 1; y <- 2` in process-table.R
+    brace_linter = NULL,              # matches blockr.ggplot
+    commented_code_linter = NULL      # commented alternatives in inst/examples
+  )
