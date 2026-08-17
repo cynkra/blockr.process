@@ -54,13 +54,12 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="blockrprocess">blockr.process<a class="anchor" aria-label="anchor" href="#blockrprocess"></a>
 </h1></div>
-<p><strong><a href="https://blockr.cloud/app/data-collection" class="external-link">Live demo: a quarterly data collection →</a></strong></p>
-<p><a href="https://cynkra.github.io/blockr.process/">Reference documentation</a></p>
+<p><a href="https://blockr.cloud/app/data-collection" class="external-link">Live demo: a quarterly data collection</a> · <a href="https://cynkra.github.io/blockr.process/">Reference documentation</a></p>
 <blockquote>
-<p>A working prototype. It runs processes, executes the tasks that are scripts in a headless worker, and picks up events from other systems; the live demo above does all three.</p>
-<p>It replaces <a href="https://github.com/cynkra/blockr.task" class="external-link">blockr.task</a>, so the API is still moving. Function names, column names and the block interface may change before a stable release. Pin a commit if you depend on it.</p>
+<p>Replacement of <a href="https://github.com/cynkra/blockr.task" class="external-link">blockr.task</a></p>
+<p>The API is still moving: function names, column names and the block interface may change.</p>
 </blockquote>
-<p>A process definition is one wide table: one row per task, with columns for who does it, what it waits for, and whether a script does it instead of a person. That table is the model. Everything else in the package either displays it or folds its event log.</p>
+<p>A process definition is a data frame, one row per task. The columns say who acts, what the task waits for, and whether a script does it instead of a person.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">process</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  task        <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"deliver"</span>, <span class="st">"validate"</span>, <span class="st">"review"</span>,  <span class="st">"approve"</span><span class="op">)</span>,</span>
@@ -69,24 +68,8 @@
 <span>  depends_on  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">""</span>,         <span class="st">"deliver"</span>,  <span class="st">"validate"</span>, <span class="st">"review"</span><span class="op">)</span>,</span>
 <span>  script      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">""</span>,         <span class="st">"validate.R"</span>, <span class="st">""</span>,      <span class="st">""</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>From that one table you get:</p>
-<ul>
-<li>a BPMN 2.0 diagram with live status on it (start and end events, gateways, lanes and multi-instance markers are derived, not drawn)</li>
-<li>a task list people work in, where every click is an event</li>
-<li>a worker that runs the tasks that are scripts</li>
-<li>an event log, which is also the audit trail, since state is stored nowhere else</li>
-</ul>
-<p>It is built on <a href="https://github.com/BristolMyersSquibb/blockr" class="external-link">blockr</a>, so the table flows through a board and any blockr block can work on it. A <code>dplyr::filter(assignee == "ana")</code> block gives one person their task list; a table block gives management a report.</p>
-<div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"cynkra/blockr.process"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="the-three-moving-parts">The three moving parts<a class="anchor" aria-label="anchor" href="#the-three-moving-parts"></a>
-</h2>
+<p><code><a href="reference/start_instance.html">start_instance()</a></code> opens an instance of a definition and writes an append-only event log. A click in the task list, a script the worker ran, a message from another system: each is one appended line. Current state is the latest event per (task, element, field), so the log is also the audit trail.</p>
+<p><code><a href="reference/run_worker.html">run_worker()</a></code> is a headless R process. It runs the tasks that have a <code>script</code>, and ingests the JSON files other systems drop into the inbox. Shiny sessions hold no workflow state.</p>
 <pre><code>   definition            instance                    execution
    ──────────            ────────                    ─────────
    a wide table   ──►    events.jsonl        ◄──     worker (a plain
@@ -95,14 +78,13 @@
                               ▲
                               │
                          inbox/*.json  ◄── other systems, any language</code></pre>
-<ul>
-<li>
-<strong>Definition</strong>: a data frame. Edit it in R, in a CSV, or in the process block’s editor. It never changes while an instance runs; an instance records the version it started with.</li>
-<li>
-<strong>Instance</strong>: <code><a href="reference/start_instance.html">start_instance()</a></code> stamps the definition and the element list into the log. Every click, every script, every message after that is one appended line. Current state is the latest event per (task, element, field), so you get the full history without writing it separately.</li>
-<li>
-<strong>Execution</strong>: <code><a href="reference/run_worker.html">run_worker()</a></code> is a headless R process. A live Shiny session never holds workflow state, so closing the browser does not stop production and two people watching see the same thing.</li>
-</ul>
+<p>The table flows through a <a href="https://github.com/BristolMyersSquibb/blockr" class="external-link">blockr</a> board. The blocks edit the definition, work the task list, draw the BPMN diagram and read the log; any other blockr block also applies. A <code>dplyr::filter(assignee == "ana")</code> block is one person’s task list.</p>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"cynkra/blockr.process"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
@@ -148,9 +130,9 @@
 <span><span class="co">#&gt; 9   review    east blocked</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="the-tables-vocabulary">The table’s vocabulary<a class="anchor" aria-label="anchor" href="#the-tables-vocabulary"></a>
+<h2 id="columns">Columns<a class="anchor" aria-label="anchor" href="#columns"></a>
 </h2>
-<p>The vocabulary is BPMN 2.0 throughout: process, task, lane, multi-instance, collection, element, instance, assignee. Anyone who knows BPMN can read a definition without learning new terms.</p>
+<p>Naming follows BPMN 2.0: process, task, lane, multi-instance, collection, element, instance, assignee. Only <code>task</code> and <code>name</code> are required.</p>
 <table class="table">
 <colgroup>
 <col width="50%">
@@ -182,8 +164,7 @@
 </tr>
 <tr>
 <td><code>collection</code></td>
-<td>
-<strong>this row is a multi-instance group</strong>, repeating per element</td>
+<td>this row is a multi-instance group, repeating per element</td>
 </tr>
 <tr>
 <td><code>parent</code></td>
@@ -210,8 +191,7 @@
 </tr>
 </tbody>
 </table>
-<p><code>depends_on</code> is flow (a DAG over tasks), <code>parent</code> is scope (a tree), and <code>collection</code> is repetition (a property of one row); the three relations never overlap. A dependency may name a group, in either direction; BPMN forbids a sequence flow that crosses a sub-process boundary, so container edges are lowered onto the group’s entries and exits before anything reads the table.</p>
-<p>Everything except <code>task</code> and <code>name</code> is optional. A definition with three columns is a valid process.</p>
+<p><code>depends_on</code> is flow (a DAG over tasks), <code>parent</code> is scope (a tree), <code>collection</code> is repetition (a property of one row). The three never overlap. A dependency may name a group, in either direction; BPMN forbids a sequence flow across a sub-process boundary, so container edges are lowered onto the group’s entries and exits before anything reads the table.</p>
 </div>
 <div class="section level2">
 <h2 id="blocks">Blocks<a class="anchor" aria-label="anchor" href="#blocks"></a>
@@ -256,11 +236,11 @@
 </tr>
 </tbody>
 </table>
+<p>The diagram is derived from the columns: start and end events, gateways, lanes and multi-instance markers follow from <code>depends_on</code>, <code>role</code>, <code>collection</code> and <code>parent</code>.</p>
 </div>
 <div class="section level2">
-<h2 id="running-scripts-and-talking-to-other-systems">Running scripts, and talking to other systems<a class="anchor" aria-label="anchor" href="#running-scripts-and-talking-to-other-systems"></a>
+<h2 id="vignettes">Vignettes<a class="anchor" aria-label="anchor" href="#vignettes"></a>
 </h2>
-<p>Two vignettes cover the parts that leave the R session:</p>
 <ul>
 <li>
 <code><a href="articles/running-scripts.html">vignette("running-scripts")</a></code>: the worker, the jobs directory, retries and timeouts, what a script receives, and how to deploy it (cron, systemd, Docker, Posit Connect).</li>
@@ -271,17 +251,15 @@
 <div class="section level2">
 <h2 id="demo">Demo<a class="anchor" aria-label="anchor" href="#demo"></a>
 </h2>
-<p><a href="https://blockr.cloud/app/data-collection" class="external-link">Try it live: a quarterly data collection</a>. Eight reporting units, a worker running the scripts, a delivery platform writing into the inbox, and a rework loop.</p>
-<p>Start an instance and the task list unfolds per unit. “Simulate delivery” writes an inbox message that the worker turns into an event; the QA check answers <code>false</code> on its first attempt, so the rework branch opens, and after the reconciliation it answers <code>true</code>. Open a second browser window on the same demo and you both watch the same event log.</p>
-<p>The same board runs locally, from the installed package:</p>
+<p><a href="https://blockr.cloud/app/data-collection" class="external-link">The live demo</a> is a quarterly data collection over eight reporting units, with a worker running the scripts, a delivery platform writing into the inbox, and a rework loop. The same board runs locally:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples/data-collection.R"</span>, package <span class="op">=</span> <span class="st">"blockr.process"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><code>dev/data-collection.md</code> is the click script (what to show, in order) and <code>dev/data-collection.R</code> runs the board against local source checkouts.</p>
+<p><code>dev/data-collection.md</code> is the click script (what to show, in order), <code>dev/data-collection.R</code> runs the board against local source checkouts.</p>
 </div>
 <div class="section level2">
 <h2 id="design-notes">Design notes<a class="anchor" aria-label="anchor" href="#design-notes"></a>
 </h2>
-<p>The BPMN half (model, interchange XML, auto-layout, widget) lives in the <code>bpmn-*.R</code> files and depends on nothing else in the package, so it can be lifted back out into a standalone package once the process model stops moving. Rendering is <a href="https://github.com/process-analytics/bpmn-visualization-js" class="external-link">bpmn-visualization</a> (Apache-2.0), layout is <a href="https://github.com/bpmn-io/bpmn-auto-layout" class="external-link">bpmn-auto-layout</a> (MIT); both are bundled, so the diagram needs no server-side Node. See <a href="LICENSE.note">LICENSE.note</a> for the full attribution of the bundled JavaScript.</p>
+<p>The BPMN half (model, interchange XML, auto-layout, widget) lives in the <code>bpmn-*.R</code> files and depends on nothing else in the package, so it can be lifted out into a package of its own once the process model stops moving. Rendering is <a href="https://github.com/process-analytics/bpmn-visualization-js" class="external-link">bpmn-visualization</a> (Apache-2.0), layout is <a href="https://github.com/bpmn-io/bpmn-auto-layout" class="external-link">bpmn-auto-layout</a> (MIT); both are bundled, so the diagram needs no server-side Node. See <a href="LICENSE.note">LICENSE.note</a> for the attribution of the bundled JavaScript.</p>
 <p>blockr.process itself is GPL (&gt;= 3).</p>
 <p>The design specs behind the package (the process model, script execution, external systems) live in cynkra’s internal <code>blockr.design</code> repository under <code>open/blockr-process/</code>.</p>
 </div>
