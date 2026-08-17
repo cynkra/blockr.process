@@ -53,7 +53,7 @@ instance_log(store, "2026Q1")[, c("task", "field", "value", "actor")]
 #> 1 @instance  process
 #>                                                                           value
 #> 5                                                                          done
-#> 4                                                           2026-08-17T05:37:05
+#> 4                                                           2026-08-17T16:02:16
 #> 3                                                                      0c6c4a44
 #> 2                                                                {"element":[]}
 #> 1 {"task":["delivery"],"name":["Delivery"],"role":["system"],"depends_on":[""]}
