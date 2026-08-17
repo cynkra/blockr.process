@@ -1,21 +1,16 @@
 # blockr.process
 
-**[Live demo: a quarterly data collection →](https://blockr.cloud/app/data-collection)**
-
+[Live demo: a quarterly data collection](https://blockr.cloud/app/data-collection) ·
 [Reference documentation](https://cynkra.github.io/blockr.process/)
 
-> A working prototype. It runs processes, executes the tasks that are
-> scripts in a headless worker, and picks up events from other systems; the
-> live demo above does all three.
+> Replacement of [blockr.task](https://github.com/cynkra/blockr.task)
 >
-> It replaces [blockr.task](https://github.com/cynkra/blockr.task), so the
-> API is still moving. Function names, column names and the block interface
-> may change before a stable release. Pin a commit if you depend on it.
+> The API is still moving: function names, column names and the block
+> interface may change.
 
-A process definition is one wide table: one row per task, with columns for
-who does it, what it waits for, and whether a script does it instead of a
-person. That table is the model. Everything else in the package either
-displays it or folds its event log.
+A process definition is a data frame, one row per task. The columns say who
+acts, what the task waits for, and whether a script does it instead of a
+person.
 
 ```r
 process <- data.frame(
@@ -27,28 +22,15 @@ process <- data.frame(
 )
 ```
 
-From that one table you get:
+`start_instance()` opens an instance of a definition and writes an
+append-only event log. A click in the task list, a script the worker ran, a
+message from another system: each is one appended line. Current state is
+the latest event per (task, element, field), so the log is also the audit
+trail.
 
-- a BPMN 2.0 diagram with live status on it (start and end events,
-  gateways, lanes and multi-instance markers are derived, not drawn)
-- a task list people work in, where every click is an event
-- a worker that runs the tasks that are scripts
-- an event log, which is also the audit trail, since state is stored
-  nowhere else
-
-It is built on [blockr](https://github.com/BristolMyersSquibb/blockr), so
-the table flows through a board and any blockr block can work on it. A
-`dplyr::filter(assignee == "ana")` block gives one person their task list; a
-table block gives management a report.
-
-## Installation
-
-```r
-# install.packages("pak")
-pak::pak("cynkra/blockr.process")
-```
-
-## The three moving parts
+`run_worker()` is a headless R process. It runs the tasks that have a
+`script`, and ingests the JSON files other systems drop into the inbox.
+Shiny sessions hold no workflow state.
 
 ```
    definition            instance                    execution
@@ -61,16 +43,18 @@ pak::pak("cynkra/blockr.process")
                          inbox/*.json  ◄── other systems, any language
 ```
 
-- **Definition**: a data frame. Edit it in R, in a CSV, or in the process
-  block's editor. It never changes while an instance runs; an instance
-  records the version it started with.
-- **Instance**: `start_instance()` stamps the definition and the element
-  list into the log. Every click, every script, every message after that is
-  one appended line. Current state is the latest event per (task, element,
-  field), so you get the full history without writing it separately.
-- **Execution**: `run_worker()` is a headless R process. A live Shiny
-  session never holds workflow state, so closing the browser does not stop
-  production and two people watching see the same thing.
+The table flows through a
+[blockr](https://github.com/BristolMyersSquibb/blockr) board. The blocks
+edit the definition, work the task list, draw the BPMN diagram and read the
+log; any other blockr block also applies. A
+`dplyr::filter(assignee == "ana")` block is one person's task list.
+
+## Installation
+
+```r
+# install.packages("pak")
+pak::pak("cynkra/blockr.process")
+```
 
 ## Quick start
 
@@ -115,11 +99,10 @@ instance_view(store, "2026Q1")[, c("task", "element", "status")]
 #> 9   review    east blocked
 ```
 
-## The table's vocabulary
+## Columns
 
-The vocabulary is BPMN 2.0 throughout: process, task, lane,
-multi-instance, collection, element, instance, assignee. Anyone who knows
-BPMN can read a definition without learning new terms.
+Naming follows BPMN 2.0: process, task, lane, multi-instance, collection,
+element, instance, assignee. Only `task` and `name` are required.
 
 | column | what it says |
 |---|---|
@@ -127,22 +110,18 @@ BPMN can read a definition without learning new terms.
 | `role` | who may act. Becomes a lane; `system` means nobody |
 | `depends_on` | flow, comma separated. `qa_check:false` waits for an outcome |
 | `script` | `forecast.R` (a file in the jobs directory) or `mypkg::forecast` (a function in an allowed package); the worker runs it |
-| `collection` | **this row is a multi-instance group**, repeating per element |
+| `collection` | this row is a multi-instance group, repeating per element |
 | `parent` | which group a task is in |
 | `join` | how many dependencies are enough: `all`, `any`, `n=3`, `pct=90` |
 | `complete_when` | how many elements close a group |
 | `sequential` | elements run one at a time |
 | `retry`, `timeout`, `params` | how the worker runs a script |
 
-`depends_on` is flow (a DAG over tasks), `parent` is scope (a tree), and
-`collection` is repetition (a property of one row); the three relations
-never overlap. A dependency may name a group, in
-either direction; BPMN forbids a sequence flow that crosses a sub-process
-boundary, so container edges are lowered onto the group's entries and exits
-before anything reads the table.
-
-Everything except `task` and `name` is optional. A definition with three
-columns is a valid process.
+`depends_on` is flow (a DAG over tasks), `parent` is scope (a tree),
+`collection` is repetition (a property of one row). The three never
+overlap. A dependency may name a group, in either direction; BPMN forbids a
+sequence flow across a sub-process boundary, so container edges are lowered
+onto the group's entries and exits before anything reads the table.
 
 ## Blocks
 
@@ -156,36 +135,30 @@ columns is a valid process.
 | `new_event_log_block()` | the audit history, newest first |
 | `new_assign_block()` | assign people and statuses in block state (no store) |
 
-## Running scripts, and talking to other systems
+The diagram is derived from the columns: start and end events,
+gateways, lanes and multi-instance markers follow from `depends_on`,
+`role`, `collection` and `parent`.
 
-Two vignettes cover the parts that leave the R session:
+## Vignettes
 
 - `vignette("running-scripts")`: the worker, the jobs directory, retries
   and timeouts, what a script receives, and how to deploy it (cron,
   systemd, Docker, Posit Connect).
-- `vignette("external-systems")`: the inbox, and how a delivery platform,
-  a database trigger or a CI job moves a process forward through it, with
+- `vignette("external-systems")`: the inbox, and how a delivery platform, a
+  database trigger or a CI job moves a process forward through it, with
   idempotency and an audit trail. Plus the HTTP and pull variants.
 
 ## Demo
 
-[Try it live: a quarterly data collection][demo]. Eight reporting units, a
-worker running the scripts, a delivery platform writing into the inbox, and a
-rework loop.
-
-Start an instance and the task list unfolds per unit. "Simulate delivery"
-writes an inbox message that the worker turns into an event; the QA check
-answers `false` on its first attempt, so the rework branch opens, and after
-the reconciliation it answers `true`. Open a second browser window on the
-same demo and you both watch the same event log.
-
-The same board runs locally, from the installed package:
+[The live demo][demo] is a quarterly data collection over eight reporting
+units, with a worker running the scripts, a delivery platform writing into
+the inbox, and a rework loop. The same board runs locally:
 
 ```r
 source(system.file("examples/data-collection.R", package = "blockr.process"))
 ```
 
-`dev/data-collection.md` is the click script (what to show, in order) and
+`dev/data-collection.md` is the click script (what to show, in order),
 `dev/data-collection.R` runs the board against local source checkouts.
 
 [demo]: https://blockr.cloud/app/data-collection
@@ -194,14 +167,13 @@ source(system.file("examples/data-collection.R", package = "blockr.process"))
 
 The BPMN half (model, interchange XML, auto-layout, widget) lives in the
 `bpmn-*.R` files and depends on nothing else in the package, so it can be
-lifted back out into a standalone package once the process model stops
-moving. Rendering is
+lifted out into a package of its own once the process model stops moving.
+Rendering is
 [bpmn-visualization](https://github.com/process-analytics/bpmn-visualization-js)
 (Apache-2.0), layout is
 [bpmn-auto-layout](https://github.com/bpmn-io/bpmn-auto-layout) (MIT); both
 are bundled, so the diagram needs no server-side Node. See
-[LICENSE.note](LICENSE.note) for the full attribution of the bundled
-JavaScript.
+[LICENSE.note](LICENSE.note) for the attribution of the bundled JavaScript.
 
 blockr.process itself is GPL (>= 3).
 
