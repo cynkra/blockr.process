@@ -19,7 +19,10 @@
     category = c(
       "input", "transform", "transform", "input", "transform", "input"
     ),
-    package = pkgname
+    package = pkgname,
+    # pkgdown's reference build load_all()s on top of the installed package,
+    # so .onLoad runs twice and a plain register aborts on the second pass.
+    overwrite = TRUE
   )
 
   # The demo's two blocks (R/demo-blocks.R). They are registered because the
@@ -40,6 +43,7 @@
       )
     ),
     category = c("transform", "input"),
-    package = pkgname
+    package = pkgname,
+    overwrite = TRUE
   )
 }

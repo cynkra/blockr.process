@@ -46,7 +46,7 @@ formals (`store`, `instance`, `source`, `poll`) define the block's state.}
 Takes the process definition as its input and opens an instance from it:
 pick the year (the instance id), pick a collection, click "Start
 instance" -- one [start_instance()]. Once the instance exists the card shows
-its header (id, [process_version()], created, size) and warns when the
+its header (id, [process_version()], created, size) and notes when the
 incoming definition no longer matches the stamped one.
 }
 \details{
