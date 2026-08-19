@@ -34,7 +34,7 @@ const el = (tag) => ({
 
 global.document = { createElement: el, body: el('body') };
 global.setTimeout = (f) => f && 0;
-global.minidagRail = { create: () => ({ setData() {} }) };
+global.outlineRail = { create: () => ({ setData() {} }) };
 global.Blockr = {
   Select: { single() {} },
   registerBlock(def) { global.__block = def; }

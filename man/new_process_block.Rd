@@ -24,7 +24,7 @@ The block emits the wide process table; the diagram and the instance views
 downstream redraw as you edit.
 }
 \details{
-The control UI is the minidag rail (`blockr.outline::minidag_rail_dep()`)
+The control UI is the outline rail (`blockr.outline::outline_rail_dep()`)
 driven by a process adapter (`inst/js/process-block.js`): tasks are rows in
 flow order, dependencies are the rail drawn beside them, and the gestures
 are the board editor's -- drag a task's dot onto another row to make it

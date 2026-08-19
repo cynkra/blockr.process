@@ -41,7 +41,7 @@ blockr_pkgs <- c(
   "blockr.core",
   "blockr.dplyr",
   "blockr.dock",
-  "blockr.outline",   # the minidag rail the process editor is built on
+  "blockr.outline",   # the outline rail the process editor is built on
   "blockr.session",   # project save / load / versions
   "blockr.process"
 )
@@ -164,7 +164,7 @@ board <- new_dock_board(
     new_link(from = "process", to = "bpmn_def", input = "data"),
     new_link(from = "tasks", to = "bpmn", input = "data")
   ),
-  extensions = new_minidag_extension(),
+  extensions = new_outline_extension(),
   grids = grids,
   views = lapply(grids, function(g) dock_view(layout_panel_ids(g))),
   active = "Instance"

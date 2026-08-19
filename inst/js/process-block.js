@@ -1,7 +1,7 @@
 // @ts-check
-/* The process editor: a minidag rail whose nodes are tasks.
+/* The process editor: a outline rail whose nodes are tasks.
  *
- * `minidag-rail.js` (blockr.outline) draws the list and owns every gesture --
+ * `outline-rail.js` (blockr.outline) draws the list and owns every gesture --
  * drag a dot onto a row to add a dependency, release on the canvas to append
  * a task, hover an edge for the ✕. This file is the ADAPTER: it turns the
  * flat `tasks` state into that renderer's model and turns the gestures back
@@ -149,9 +149,9 @@
       this._closePicker = null;
 
       this.el.classList.add('process-block');
-      this._rail = minidagRail.create(this.el, this._adapter());
+      this._rail = outlineRail.create(this.el, this._adapter());
       this._push();
-      // test/inspection hook, same purpose as minidag's `window._minidag`
+      // test/inspection hook, same purpose as outline's `window._outline`
       window._processBlock = this;
       // late-mount handshake: a dock view builds this element AFTER the
       // initial state push -- announce, and R replays the state
@@ -274,7 +274,7 @@
      * Nodes are tasks, edges are dependency tokens, and the token's outcome
      * qualifier is the edge's `input`. Groups become STACKS, which is the
      * renderer's word for a framed run of rows. Ordering, lanes and loop-back
-     * classification all happen downstream in minidag-layout.js.
+     * classification all happen downstream in outline-layout.js.
      *
      * A dependency may name a CONTAINER, which is the BPMN-correct way to
      * write an edge that would otherwise cross a sub-process boundary. The
@@ -403,7 +403,7 @@
 
     /* --- The adapter the renderer talks to --- */
 
-    /** @returns {MinidagRailAdapter} */
+    /** @returns {OutlineRailAdapter} */
     _adapter() {
       return {
         opts: {

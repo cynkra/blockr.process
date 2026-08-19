@@ -55,6 +55,6 @@ serve(
       new_link(from = "assign", to = "bpmn", input = "data"),
       new_link(from = "assign", to = "mine", input = "data")
     ),
-    extensions = new_minidag_extension()
+    extensions = new_outline_extension()
   )
 )

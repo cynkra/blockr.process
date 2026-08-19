@@ -1,5 +1,5 @@
-/* The process editor rides blockr.extra's minidag rail, so the skeleton --
-   rows, rail, dots, pickers -- is styled by minidag.css. What is left here is
+/* The process editor rides blockr.extra's outline rail, so the skeleton --
+   rows, rail, dots, pickers -- is styled by outline.css. What is left here is
    the row CONTENT a task has and a block does not: the kind icon, the role
    select, the script field and the outcome chips. */
 
@@ -143,7 +143,7 @@
 .process-block .pb-out-t { background: #dcfce7; color: #16a34a; }
 .process-block .pb-out-f { background: #fee2e2; color: #dc2626; }
 
-/* --- the four-kind picker (minidag's popover, with an icon per row) --- */
+/* --- the four-kind picker (outline's popover, with an icon per row) --- */
 
 /* Wide enough for the longest pair ("Automatic check" / "a script answers")
    to stay on one line: a wrapped title pushes its icon off the baseline of
@@ -194,7 +194,7 @@
 /* --- the group frame: structure, not emphasis --- */
 
 /* Variant A of mockups/group-weight.html: the hairline the rest of the
-   system draws with, and no fill. minidag's default frame is a touch
+   system draws with, and no fill. outline's default frame is a touch
    darker and tinted, which is right on a board where stacks are objects
    you sort by; here the group is an attribute of the rows inside it. */
 .process-block .md-stackframe {

@@ -205,7 +205,7 @@ interface DepToken {
   label: string | null;
 }
 
-/* --- The minidag rail (blockr.outline), driven by the process adapter --- */
+/* --- The outline rail (blockr.outline), driven by the process adapter --- */
 
 /** A group as the renderer sees it: a stack, with its defining row along. */
 interface ProcessStack {
@@ -241,21 +241,21 @@ interface ProcessEdge {
   input: string;
 }
 
-interface MinidagRailModel {
+interface OutlineRailModel {
   blocks: ProcessNode[];
   links: ProcessEdge[];
   stacks: ProcessStack[];
 }
 
-interface MinidagRailHandle {
-  setData(model: MinidagRailModel): void;
+interface OutlineRailHandle {
+  setData(model: OutlineRailModel): void;
   setBadge(msg: unknown): void;
   render(): void;
   inspect(): unknown;
 }
 
-/** See `blockr.outline/inst/assets/js/minidag-rail.js` for the adapter contract. */
-interface MinidagRailAdapter {
+/** See `blockr.outline/inst/assets/js/outline-rail.js` for the adapter contract. */
+interface OutlineRailAdapter {
   opts?: Record<string, unknown>;
   emit(name: string, payload: any): void;
   nodeLead?(node: ProcessNode): Node | null;
@@ -266,12 +266,12 @@ interface MinidagRailAdapter {
   showSlot?(link: ProcessEdge): boolean;
 }
 
-declare const minidagRail: {
-  create(el: HTMLElement, adapter: MinidagRailAdapter): MinidagRailHandle;
+declare const outlineRail: {
+  create(el: HTMLElement, adapter: OutlineRailAdapter): OutlineRailHandle;
 };
 
 interface Window {
-  /** Test/inspection hook on the live editor (cf. minidag's `_minidag`). */
+  /** Test/inspection hook on the live editor (cf. outline's `_outline`). */
   _processBlock: unknown;
   /** Shiny at runtime; absent in static test harnesses. */
   Shiny?: {

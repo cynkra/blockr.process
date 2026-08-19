@@ -29,7 +29,7 @@
 #' @param shared_deps Character subset of `c("select", "input")`.
 #' @param extra_deps Further [htmltools::htmlDependency()] objects the block's
 #'   JS needs, loaded before its own asset pair (the process block's editor is
-#'   built on `blockr.outline::minidag_rail_dep()`).
+#'   built on `blockr.outline::outline_rail_dep()`).
 #' @param ctor,ctor_pkg Forwarded to [blockr.core::new_plot_block()].
 #' @param ... Forwarded to [blockr.core::new_plot_block()].
 #' @noRd
