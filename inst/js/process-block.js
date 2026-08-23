@@ -638,6 +638,11 @@
       );
       if (!members.length) return;
       const collection = this._collections()[0] || 'element';
+      // Grouping rows that are already in a group MOVES them: they leave it
+      // for the new one, which is top level. Nesting the new group inside
+      // their old one is what this asks for, and the model does not carry it
+      // -- `_membersOf()` counts body rows, so a group whose only member is a
+      // group reads as empty and gets collected.
       const group = {
         task: this._newId('g'),
         name: 'for each ' + collection,
@@ -653,6 +658,9 @@
       const at = Math.min(...members.map((s) => this._steps.indexOf(s)));
       this._steps.splice(at, 0, group);
       members.forEach((s) => { s.parent = group.task; });
+      // a group the move emptied is a husk, and goes the way `_leaveGroup()`
+      // sends it
+      this._gcGroups();
       this._edit();
     }
 

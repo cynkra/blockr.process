@@ -145,6 +145,40 @@ test('removing a lowered edge kills the token it came from', () => {
   assert.strictEqual(b._steps.find((s) => s.task === 'approve_data').dep, '');
 });
 
+test('grouping rows that are in a group moves them out of it', () => {
+  // the rail offers this for grouped rows too: they MOVE, which is how a
+  // group gets split
+  const b = build(grouped().concat([
+    step({ task: 'sign', name: 'Sign off', parent: 'each_unit' })
+  ]));
+
+  b._addGroup(['delivery', 'review']);
+  const inner = b._steps.find((s) => s.collection && s.task !== 'each_unit');
+  assert.ok(inner, 'a second group row was added');
+  assert.strictEqual(inner.parent, '');
+  assert.deepStrictEqual(
+    b._steps.filter((s) => s.parent === inner.task).map((s) => s.task),
+    ['delivery', 'review']
+  );
+  // the one they left keeps the member that stayed
+  assert.deepStrictEqual(
+    b._steps.filter((s) => s.parent === 'each_unit').map((s) => s.task),
+    ['sign']
+  );
+});
+
+test('a group the regrouping empties goes with it', () => {
+  const raw = grouped().concat([
+    step({ task: 'each_region', name: 'for each region', collection: 'region' }),
+    step({ task: 'region_check', name: 'Region check', parent: 'each_region' }),
+    step({ task: 'region_sign', name: 'Region sign', parent: 'each_region' })
+  ]);
+  const b = build(raw);
+
+  b._addGroup(['region_check', 'region_sign']);
+  assert.ok(!b._steps.some((s) => s.task === 'each_region'));
+});
+
 test('ungrouping preserves the flow through the frame', () => {
   const b = build(grouped());
 
