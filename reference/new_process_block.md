@@ -29,8 +29,8 @@ new_process_block(tasks = example_tasks(), ...)
 
 ## Details
 
-The control UI is the minidag rail
-(\`blockr.outline::minidag_rail_dep()\`) driven by a process adapter
+The control UI is the outline rail
+(\`blockr.outline::outline_rail_dep()\`) driven by a process adapter
 (\`inst/js/process-block.js\`): tasks are rows in flow order,
 dependencies are the rail drawn beside them, and the gestures are the
 board editor's – drag a task's dot onto another row to make it depend on
