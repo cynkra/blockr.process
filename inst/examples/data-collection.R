@@ -24,7 +24,9 @@
 #   Log       every event, newest first
 #
 # Nothing is started here: opening the instance IS the demo's first move.
-# The Instance view starts on the "no instance <<2026Q1>> -- start it?" card.
+# The board opens on the Process view: until an instance exists, the BPMN block
+# in the Instance view shows an error next to the "no instance <<2026Q1>> --
+# start it?" card.
 #
 # Run with:
 #   source(system.file("examples/data-collection.R", package = "blockr.process"))
@@ -167,7 +169,7 @@ board <- new_dock_board(
   extensions = new_outline_extension(),
   grids = grids,
   views = lapply(grids, function(g) dock_view(layout_panel_ids(g))),
-  active = "Instance"
+  active = "Process"
 )
 
 serve(board, plugins = custom_plugins(manage_project()))
